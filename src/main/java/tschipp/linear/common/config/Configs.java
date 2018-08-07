@@ -44,6 +44,8 @@ public class Configs {
 		@Comment("Tile Entities that cannot be picked up")
     	public String[] forbiddenBlocks = new String[]
     			{
+    					"minecraft:chest",
+    					"minecraft:trapped_chest"
     			};
 		
 	}

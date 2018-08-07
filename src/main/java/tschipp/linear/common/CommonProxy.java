@@ -15,6 +15,7 @@ import tschipp.linear.common.caps.IStartingPosition;
 import tschipp.linear.common.caps.StartingPosition;
 import tschipp.linear.common.caps.StartingPositionStorage;
 import tschipp.linear.common.event.CommonEvents;
+import tschipp.linear.common.helper.ListHandler;
 import tschipp.linear.network.BuildLine;
 import tschipp.linear.network.SyncBuildData;
 import tschipp.linear.network.SyncBuildDataClient;
@@ -42,6 +43,7 @@ public class CommonProxy {
 		CapabilityManager.INSTANCE.register(IStartingPosition.class, new StartingPositionStorage(), StartingPosition::new);
 		CapabilityManager.INSTANCE.register(IBuildData.class, new BuildDataStorage(), BuildData::new);
 	
+		ListHandler.initFilters();
 	}
 
 	

@@ -3,10 +3,8 @@ package tschipp.linear.common.caps;
 import javax.annotation.Nullable;
 
 import net.minecraft.world.GameType;
-import stanhebben.zenscript.annotations.ZenClass;
 import tschipp.linear.common.config.LinearConfig;
 import tschipp.linear.common.helper.BuildMode;
-import crafttweaker.annotations.ZenRegister;
 
 public class BuildData implements IBuildData
 {
@@ -44,41 +42,53 @@ public class BuildData implements IBuildData
 	public void enableBuildMode(BuildMode mode)
 	{
 		boolean alreadyEnabled = false;
-		for(BuildMode m : enabledModes)
-			if(m == mode)
+		for (BuildMode m : enabledModes)
+			if (m == mode)
 				alreadyEnabled = true;
-		
-		if(alreadyEnabled)
+
+		if (alreadyEnabled)
 			return;
-		
+
 		BuildMode[] modes = new BuildMode[enabledModes.length + 1];
 		System.arraycopy(enabledModes, 0, modes, 0, enabledModes.length);
 		modes[modes.length - 1] = mode;
 		enabledModes = modes;
-		
-		if(enabledModes.length == 1)
+
+		if (enabledModes.length == 1)
 			currentMode = enabledModes[0];
 	}
 
 	@Override
 	public void disableBuildMode(BuildMode mode)
 	{
-		BuildMode[] modes = new BuildMode[enabledModes.length - 1];
-		int idx = -1;
-		for (int i = 0; i < enabledModes.length; i++)
+		if (enabledModes.length > 0)
 		{
-			if (enabledModes[i] == mode)
-				idx = i;
-		}
+			BuildMode[] modes = new BuildMode[enabledModes.length - 1];
+			int idx = -1;
+			for (int i = 0; i < enabledModes.length; i++)
+			{
+				if (enabledModes[i] == mode)
+					idx = i;
+			}
 
-		if (idx != -1)
-		{
-			System.arraycopy(enabledModes, 0, modes, 0, idx);
-			System.arraycopy(enabledModes, idx + 1, modes, idx, modes.length - idx - 1);
+			if (idx != -1)
+			{
+				System.arraycopy(enabledModes, 0, modes, 0, idx);
+				System.arraycopy(enabledModes, idx + 1, modes, idx, modes.length - idx);
+
+				enabledModes = modes;
+
+				if (currentMode == mode)
+				{
+					if (enabledModes.length == 0)
+						currentMode = null;
+					else if (idx == enabledModes.length)
+						currentMode = enabledModes[0];
+					else
+						currentMode = enabledModes[idx];
+				}
+			}
 		}
-		
-		if(currentMode == mode)
-			currentMode = null;
 	}
 
 	@Override
@@ -86,6 +96,13 @@ public class BuildData implements IBuildData
 	{
 		enabledModes = new BuildMode[] {};
 		currentMode = null;
+	}
+
+	@Override
+	public void enableAllBuildModes()
+	{
+		enabledModes = BuildMode.values();
+		currentMode = BuildMode.values()[0];
 	}
 
 	@Override
@@ -183,9 +200,5 @@ public class BuildData implements IBuildData
 	{
 		this.maxDistance = num;
 	}
-	
-	
-
-	
 
 }

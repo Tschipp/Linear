@@ -31,7 +31,7 @@ public class CommonEvents
 	public void onRightClick(RightClickBlock event)
 	{
 		EntityPlayer player = event.getEntityPlayer();
-		if (player.isSneaking() && LinearHelper.getBuildMode(player) != null)
+		if (player.isSneaking() && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
 		{
 			ItemStack stack = player.getHeldItemMainhand();
 			ItemStack off = player.getHeldItemOffhand();

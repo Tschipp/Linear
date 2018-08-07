@@ -19,6 +19,8 @@ public interface IBuildData
 	
 	public void clearBuildModes();
 	
+	public void enableAllBuildModes();
+	
 	public boolean isUsingConfig();
 	
 	public void setUsingConfig(boolean bool);

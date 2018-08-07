@@ -1,7 +1,6 @@
 package tschipp.linear.common.helper;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,17 +23,15 @@ import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import stanhebben.zenscript.annotations.ZenClass;
 import tschipp.linear.Linear;
 import tschipp.linear.common.caps.BuildDataProvider;
 import tschipp.linear.common.caps.IBuildData;
 import tschipp.linear.common.caps.IStartingPosition;
 import tschipp.linear.common.caps.StartingPositionProvider;
+import tschipp.linear.common.config.LinearConfig;
 import tschipp.linear.network.SyncBuildData;
 import tschipp.linear.network.SyncBuildDataClient;
 import tschipp.linear.network.SyncStartingPosition;
-import crafttweaker.annotations.ZenRegister;
-
 
 public class LinearHelper
 {
@@ -99,13 +96,13 @@ public class LinearHelper
 		return null;
 	}
 
-	public static Set<BlockPos> getBlocksBetween(World world, IBlockState state, BlockPos a, BlockPos b, BuildMode mode)
+	public static ArrayList<BlockPos> getBlocksBetween(World world, IBlockState state, BlockPos a, BlockPos b, BuildMode mode, EntityPlayer player)
 	{
 		if (a.equals(new BlockPos(-1, -1, -1)) || b.equals(new BlockPos(-1, -1, -1)))
-			return Collections.EMPTY_SET;
+			return new ArrayList<BlockPos>();
 
 		if (state.getBlock() == Blocks.AIR)
-			return Collections.EMPTY_SET;
+			return new ArrayList<BlockPos>();
 
 		Set<BlockPos> set = new HashSet<BlockPos>();
 		int axis = mode.getAxis();
@@ -122,10 +119,11 @@ public class LinearHelper
 					a = b;
 					b = temp;
 				}
-				
+
 				c = b;
 				b = new BlockPos(a.getX(), b.getY(), b.getZ());
-			} else
+			}
+			else
 			{
 				if (a.getY() > b.getY())
 				{
@@ -134,7 +132,7 @@ public class LinearHelper
 					b = new BlockPos(temp);
 					yFlag = true;
 				}
-				
+
 				c = b;
 				b = new BlockPos(b.getX(), a.getY(), b.getZ());
 			}
@@ -149,6 +147,7 @@ public class LinearHelper
 		double differenceY = Math.abs(Math.abs(a.getY()) - Math.abs(b.getY()));
 		double differenceZ = Math.abs(Math.abs(a.getZ()) - Math.abs(b.getZ()));
 
+		FakeRenderWorld fakeWorld = new FakeRenderWorld(world, new ArrayList<BlockPos>(set), state);
 
 		for (int i = 0; i <= distance; i++)
 		{
@@ -158,8 +157,8 @@ public class LinearHelper
 			double x = Math.floor((double) a.getX() + (incrementX * i));
 			double y = Math.floor((double) a.getY() + (incrementY * i));
 			double z = Math.floor((double) a.getZ() + (incrementZ * i));
-			
-			if(axis == 2 && mode.isPlane() && yFlag)
+
+			if (axis == 2 && mode.isPlane() && yFlag)
 			{
 				x = Math.floor((double) b.getX() + (-incrementX * i));
 				y = Math.floor((double) b.getY() + (-incrementY * i));
@@ -215,10 +214,16 @@ public class LinearHelper
 			set.removeIf(pos -> !world.getBlockState(pos).getBlock().isReplaceable(world, pos) || !state.getBlock().canPlaceBlockAt(world, pos));
 		}
 
-		return set;
+		ArrayList<BlockPos> l = new ArrayList<BlockPos>(set);
+
+		final BlockPos playerPos = new BlockPos(Math.floor(player.posX) + 0.5, Math.floor(player.posY), Math.floor(player.posZ) + 0.5);
+
+		l.sort((pos1, pos2) -> (pos1.distanceSq(playerPos) > pos2.distanceSq(playerPos) ? 1 : (pos1.distanceSq(playerPos) == pos2.distanceSq(playerPos) ? 0 : -1)));
+
+		return l;
 	}
 
-	public static Set<BlockPos> getValidPositions(Set<BlockPos> posSet, EntityPlayer player)
+	public static ArrayList<BlockPos> getValidPositions(ArrayList<BlockPos> posSet, EntityPlayer player)
 	{
 		ItemStack stack = player.getHeldItem(LinearHelper.getHand(player));
 		List<ItemStack> inventory = new ArrayList<ItemStack>();
@@ -254,7 +259,7 @@ public class LinearHelper
 				positions = positions.subList(0, LinearHelper.getMaxBlocksPlaced(player));
 		}
 
-		return new HashSet<BlockPos>(positions);
+		return new ArrayList<BlockPos>(positions);
 	}
 
 	public static void removeItems(ItemStack stack, EntityPlayer player, int count)
@@ -262,10 +267,10 @@ public class LinearHelper
 		player.inventory.clearMatchingItems(stack.getItem(), stack.getMetadata(), count, null);
 	}
 
-	public static Set<BlockPos> getInvalidPositions(Set<BlockPos> posSet, EntityPlayer player)
+	public static ArrayList<BlockPos> getInvalidPositions(ArrayList<BlockPos> posSet, EntityPlayer player)
 	{
-		Set<BlockPos> valid = getValidPositions(posSet, player);
-		Set<BlockPos> newSet = new HashSet<BlockPos>(posSet);
+		ArrayList<BlockPos> valid = getValidPositions(posSet, player);
+		ArrayList<BlockPos> newSet = new ArrayList<BlockPos>(posSet);
 		newSet.removeAll(valid);
 
 		return newSet;
@@ -290,27 +295,16 @@ public class LinearHelper
 
 	public static IBlockState getState(EntityPlayer player)
 	{
-		ItemStack main = player.getHeldItemMainhand();
-		ItemStack off = player.getHeldItemOffhand();
-
-		ItemStack stack;
-		EnumHand hand;
-
-		if (main.getItem() instanceof ItemBlock)
+		if (hasValidItem(player))
 		{
-			stack = main.copy();
-			hand = EnumHand.MAIN_HAND;
-		} else if (off.getItem() instanceof ItemBlock)
-		{
-			stack = off.copy();
-			hand = EnumHand.OFF_HAND;
-		} else
-			return null;
+			ItemStack stack = getValidItem(player);
 
-		Block block = Block.getBlockFromItem(stack.getItem());
+			Block block = Block.getBlockFromItem(stack.getItem());
 
-		IBlockState state = block.getStateForPlacement(player.world, player.getPosition(), EnumFacing.UP, 0, 0, 0, stack.getMetadata(), player, hand);
-		return state;
+			IBlockState state = block.getStateForPlacement(player.world, player.getPosition(), EnumFacing.UP, 0, 0, 0, stack.getMetadata(), player, getHand(player));
+			return state;
+		}
+		return null;
 	}
 
 	public static EnumHand getHand(EntityPlayer player)
@@ -321,14 +315,54 @@ public class LinearHelper
 		ItemStack stack;
 		EnumHand hand;
 
-		if (main.getItem() instanceof ItemBlock)
-
+		if (isValid(main))
 			return EnumHand.MAIN_HAND;
-		else if (off.getItem() instanceof ItemBlock)
-
+		else if (isValid(off))
 			return EnumHand.OFF_HAND;
 		else
 			return null;
+	}
+
+	public static boolean hasValidItem(EntityPlayer player)
+	{
+		ItemStack main = player.getHeldItemMainhand();
+		ItemStack off = player.getHeldItemOffhand();
+
+		if (isValid(main))
+			return true;
+
+		if (isValid(off))
+			return true;
+
+		return false;
+	}
+
+	private static boolean isValid(ItemStack stack)
+	{
+		if (stack.getItem() instanceof ItemBlock)
+		{
+			if (!LinearConfig.Settings.useWhitelistBlocks)
+			{
+				if (!ListHandler.isForbidden(Block.getBlockFromItem(stack.getItem())))
+					return true;
+			}
+			else
+			{
+				if (ListHandler.isAllowed(Block.getBlockFromItem(stack.getItem())))
+					return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static ItemStack getValidItem(EntityPlayer player)
+	{
+		if (hasValidItem(player))
+		{
+			return player.getHeldItem(getHand(player));
+		}
+		return ItemStack.EMPTY;
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -344,7 +378,7 @@ public class LinearHelper
 		if (player.hasCapability(BuildDataProvider.BUILD_CAPABILITY, null))
 			Linear.network.sendToServer(new SyncBuildData(player.getCapability(BuildDataProvider.BUILD_CAPABILITY, null)));
 	}
-	
+
 	public static void syncBuildDataWithClient(EntityPlayer player)
 	{
 		if (player.hasCapability(BuildDataProvider.BUILD_CAPABILITY, null))

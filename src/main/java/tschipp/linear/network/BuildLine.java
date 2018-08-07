@@ -1,25 +1,27 @@
 package tschipp.linear.network;
 
+import java.util.ArrayList;
+
 import io.netty.buffer.ByteBuf;
-
-import java.util.Set;
-
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.IThreadListener;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.util.BlockSnapshot;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.event.world.BlockEvent.PlaceEvent;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import tschipp.linear.common.helper.BuildMode;
 import tschipp.linear.common.helper.LinearHelper;
 
 public class BuildLine implements IMessage, IMessageHandler<BuildLine, IMessage>
@@ -41,7 +43,8 @@ public class BuildLine implements IMessage, IMessageHandler<BuildLine, IMessage>
 	{
 		IThreadListener mainThread = (WorldServer) ctx.getServerHandler().player.world;
 
-		mainThread.addScheduledTask(new Runnable() {
+		mainThread.addScheduledTask(new Runnable()
+		{
 			EntityPlayerMP player = ctx.getServerHandler().player;
 
 			@Override
@@ -50,19 +53,27 @@ public class BuildLine implements IMessage, IMessageHandler<BuildLine, IMessage>
 				World world = player.world;
 				BlockPos start = LinearHelper.getStartPos(player);
 				IBlockState state = LinearHelper.getState(player);
-				ItemStack stack = player.getHeldItem(LinearHelper.getHand(player));
+				ItemStack stack = LinearHelper.getValidItem(player);
 
-				Set<BlockPos> positions = LinearHelper.getBlocksBetween(world, state, start, message.pos, LinearHelper.getBuildMode(player));
+				ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(world, state, start, message.pos, LinearHelper.getBuildMode(player), player);
 				positions = LinearHelper.getValidPositions(positions, player);
+
+				int blocksPlaced = 0;
 
 				for (BlockPos pos : positions)
 				{
-					world.setBlockState(pos, state);
-					SoundType soundtype = state.getBlock().getSoundType(state, world, pos, player);
-					world.playSound(player, pos, soundtype.getPlaceSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+					BlockSnapshot snapshot = BlockSnapshot.getBlockSnapshot(world, pos);
+					PlaceEvent event = ForgeEventFactory.onPlayerBlockPlace(player, snapshot, EnumFacing.DOWN, LinearHelper.getHand(player));
+
+					if (!event.isCanceled())
+					{
+						world.setBlockState(pos, state);
+						SoundType soundtype = state.getBlock().getSoundType(state, world, pos, player);
+						world.playSound(player, pos, soundtype.getPlaceSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+					}
 				}
 
-				if (positions.size() > 0)
+				if (positions.size() > 0 && blocksPlaced > 0)
 					player.swingArm(LinearHelper.getHand(player));
 
 				if (!player.isCreative())
