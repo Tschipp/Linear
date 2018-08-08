@@ -27,6 +27,15 @@ public class Configs {
 		
 		@Comment("Max distance between player and placed blocks (only applies to Survival mode)")
 		public double maxDistance=20;
+		
+		@Comment("End position highlight (blue)")
+		public boolean endPositionHighlight=true;
+		
+		@Comment("Build mode indicator xCoord")
+		public float indicatorXCoord=10f;
+		
+		@Comment("Build mode indicator yCoord")
+		public float indicatorYCoord=1045;
 	}
 	
 	public static class WhiteList

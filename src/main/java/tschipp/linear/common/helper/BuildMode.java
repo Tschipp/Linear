@@ -13,6 +13,7 @@ public enum BuildMode
 	private boolean isPlane;
 	private String name;
 	
+	
 	private BuildMode(int axis, boolean isPlane, String name)
 	{
 		this.axis = axis;
@@ -35,6 +36,8 @@ public enum BuildMode
 		return name;
 	}
 	
+	
+
 	public static BuildMode getByName(String name)
 	{
 		for(BuildMode mode : values())

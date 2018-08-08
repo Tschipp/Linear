@@ -2,14 +2,14 @@
 {
   "modid": "linear",
   "name": "Linear",
-  "description": "Fast Placing",
-  "version": "${version}",
-  "mcversion": "${mcversion}",
+  "description": "Linear enhances building in Minecraft",
+  "version": "1.0",
+  "mcversion": "1.12.2",
   "url": "",
   "updateUrl": "",
-  "authorList": ["ExampleDude"],
-  "credits": "The Forge and FML guys, for making this example",
-  "logoFile": "",
+  "authorList": ["Tschipp"],
+  "credits": "Tschipp",
+  "logoFile": "assets/linear/logo.png",
   "screenshots": [],
   "dependencies": []
 }

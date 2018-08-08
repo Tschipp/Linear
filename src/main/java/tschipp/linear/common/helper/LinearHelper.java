@@ -137,6 +137,7 @@ public class LinearHelper
 				b = new BlockPos(b.getX(), a.getY(), b.getZ());
 			}
 		}
+
 		double distance = a.getDistance(b.getX(), b.getY(), b.getZ());
 
 		double incrementX = distance == 0 ? 0 : (-a.getX() + b.getX()) / distance;
@@ -176,6 +177,7 @@ public class LinearHelper
 
 			if ((world.getBlockState(toPlace).getBlock().isReplaceable(world, toPlace) && state.getBlock().canPlaceBlockAt(world, toPlace)) || mode.isPlane())
 				set.add(toPlace);
+
 		}
 
 		if (world.getBlockState(a).getBlock().isReplaceable(world, a) && state.getBlock().canPlaceBlockAt(world, a) && axis == 3)
@@ -190,8 +192,10 @@ public class LinearHelper
 			differenceX = Math.abs(Math.abs(a.getX()) - Math.abs(c.getX()));
 
 			Set<BlockPos> morePos = new HashSet<BlockPos>();
+
 			for (BlockPos pos : set)
 			{
+
 				if (differenceY > 0)
 				{
 					for (int i = 0; i <= differenceY; i++)
@@ -211,8 +215,9 @@ public class LinearHelper
 
 			set.addAll(morePos);
 
-			set.removeIf(pos -> !world.getBlockState(pos).getBlock().isReplaceable(world, pos) || !state.getBlock().canPlaceBlockAt(world, pos));
 		}
+
+		set.removeIf(pos -> !world.getBlockState(pos).getBlock().isReplaceable(world, pos) || !state.getBlock().canPlaceBlockAt(world, pos));
 
 		ArrayList<BlockPos> l = new ArrayList<BlockPos>(set);
 

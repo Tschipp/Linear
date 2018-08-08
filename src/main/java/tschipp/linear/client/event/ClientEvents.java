@@ -31,6 +31,7 @@ import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
@@ -38,6 +39,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import tschipp.linear.Linear;
 import tschipp.linear.client.keybind.LinearKeybind;
+import tschipp.linear.common.config.LinearConfig;
 import tschipp.linear.common.helper.FakeRenderWorld;
 import tschipp.linear.common.helper.LinearHelper;
 import tschipp.linear.network.BuildLine;
@@ -121,13 +123,21 @@ public class ClientEvents
 		float partialticks = event.getPartialTicks();
 		ScaledResolution res = event.getResolution();
 		EntityPlayer player = Minecraft.getMinecraft().player;
+		Minecraft mc = Minecraft.getMinecraft();
 
-		GlStateManager.pushMatrix();
-		GlStateManager.enableAlpha();
-		GlStateManager.alphaFunc(516, 0.1F);
+		float widthheight = (float) ((res.getScaledWidth_double() * res.getScaleFactor()) / (res.getScaledHeight_double() * res.getScaleFactor()));
+		float heightwidth = (float) ((res.getScaledHeight_double() * res.getScaleFactor()) / (res.getScaledWidth_double() * res.getScaleFactor()));
+
+		float factorX = (float) (res.getScaledWidth_double() / 1920f);
+		float factorY = (float) (res.getScaledHeight_double() / 1080f);
 
 		if (LinearHelper.hasValidItem(player) && LinearHelper.getBuildMode(player) != null)
-			Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("Build Mode: " + I18n.translateToLocal("desc." + LinearHelper.getBuildMode(player).getName()), (int) (res.getScaledWidth() / 2 - (104 * res.getScaleFactor())), (int) (res.getScaledHeight() / 2 + (51 * res.getScaleFactor())), 16777215);
+		{
+			float x = (factorX * LinearConfig.Settings.indicatorXCoord);
+			float y = (factorY * LinearConfig.Settings.indicatorYCoord);
+
+			Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("Build Mode: " + I18n.translateToLocal("desc." + LinearHelper.getBuildMode(player).getName()), x, y, 16777215);
+		}
 
 		if (player.isSneaking() && LinearHelper.hasStartPos(player) && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
 		{
@@ -143,34 +153,52 @@ public class ClientEvents
 			ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(player.world, state, start, end, LinearHelper.getBuildMode(player), player);
 			ArrayList<BlockPos> valids = LinearHelper.getValidPositions(positions, player);
 
-			// GlStateManager.pushMatrix();
-			// GL11.glColor4f(1f, 1f, 1f, 1f);
-			// GlStateManager.enableRescaleNormal();
-			// GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-			RenderHelper.enableGUIStandardItemLighting();
-			GlStateManager.enableBlend();
-			GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-			GL14.glBlendColor(1f, 1f, 1f, 0.5f);
 			Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+			RenderHelper.enableGUIStandardItemLighting();
 
-			Minecraft.getMinecraft().getRenderItem().renderItemAndEffectIntoGUI(stack, (int) (res.getScaledWidth() / 2 + (2.3 * res.getScaleFactor())), (int) (res.getScaledHeight() / 2 - (2.4 * res.getScaleFactor())));
-			// RenderUtil.renderItemModelIntoGUIWithColor(stack, (int)
-			// (res.getScaledWidth() / 2 + (2.3 * res.getScaleFactor())), (int)
-			// (res.getScaledHeight() / 2 - (2.4 * res.getScaleFactor())),
-			// RenderUtil.getModelFromStack(stack, player.world), 200f,
-			// 16777215);
+			if (event.getType() == ElementType.HOTBAR)
+				Minecraft.getMinecraft().getRenderItem().renderItemAndEffectIntoGUI(stack, (int) (factorX * 980), (int) (factorY * 514));
 
 			RenderHelper.disableStandardItemLighting();
-			// GlStateManager.disableRescaleNormal();
-			// GlStateManager.disableBlend();
-			// GlStateManager.popMatrix();
-
-			Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("x " + valids.size(), (int) (res.getScaledWidth() / 2 + (8 * res.getScaleFactor())), (int) (res.getScaledHeight() / 2 - (1.5 * res.getScaleFactor())), positions.size() > valids.size() ? 16711680 : 16777215);
+			
+			Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("x " + valids.size(), (int) (factorX * 1038), (int) (factorY * 528), positions.size() > valids.size() ? 16711680 : 16777215);
 
 		}
 		Minecraft.getMinecraft().renderEngine.bindTexture(new ResourceLocation("textures/gui/icons.png"));
 		GlStateManager.color(1f, 1f, 1f);
-		GlStateManager.popMatrix();
+	}
+
+	@SideOnly(Side.CLIENT)
+	@SubscribeEvent
+	public void renderTextOverlay(RenderGameOverlayEvent.Text event)
+	{
+		// float partialticks = event.getPartialTicks();
+		// ScaledResolution res = event.getResolution();
+		// EntityPlayer player = Minecraft.getMinecraft().player;
+		// Minecraft mc = Minecraft.getMinecraft();
+		//
+		// GlStateManager.pushMatrix();
+		// GlStateManager.enableAlpha();
+		// GlStateManager.alphaFunc(516, 0.1F);
+		//
+		// System.out.println(res.getScaledWidth() + ", " +
+		// res.getScaledHeight() + ", " + res.getScaleFactor());
+		//
+		// if (LinearHelper.hasValidItem(player) &&
+		// LinearHelper.getBuildMode(player) != null)
+		// {
+		// int x = (int) (2.5*res.getScaleFactor());
+		// int y = (int) (108 *res.getScaleFactor());
+		//
+		// Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("Build
+		// Mode: " + I18n.translateToLocal("desc." +
+		// LinearHelper.getBuildMode(player).getName()), x, y, 16777215);
+		// }
+		//
+		// Minecraft.getMinecraft().renderEngine.bindTexture(new
+		// ResourceLocation("textures/gui/icons.png"));
+		// GlStateManager.color(1f, 1f, 1f);
+		// GlStateManager.popMatrix();
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -240,7 +268,7 @@ public class ClientEvents
 				GlStateManager.pushMatrix();
 				GlStateManager.translate(-d0, -d1, -d2);
 				GlStateManager.translate(toPlace.getX(), toPlace.getY(), toPlace.getZ());
-//				GlStateManager.rotate(-90, 0f, 1f, 0f);
+				// GlStateManager.rotate(-90, 0f, 1f, 0f);
 
 				if (Math.sqrt(player.getPosition().distanceSq(toPlace)) > 40)
 				{
@@ -261,30 +289,63 @@ public class ClientEvents
 
 				IBlockState state = stateToRender;
 				state = stateToRender.getActualState(renderWorld, toPlace);
-				
+
 				AxisAlignedBB aabb = state.getBoundingBox(renderWorld, toPlace);
-				
+
 				double width = aabb.maxX - aabb.minX;
 				double height = aabb.maxY - aabb.minY;
 				double depth = aabb.maxZ - aabb.minZ;
-				
-				Vec3d center = aabb.getCenter();
-				
-//				GlStateManager.translate(center.x-0.5, center.y-0.5, center.z-0.5);
-				
-//				GlStateManager.scale(0.5, 1, 0.5);
 
-				GlStateManager.translate(aabb.minX,0,-1+aabb.maxZ);
+				Vec3d center = aabb.getCenter();
+
+				GlStateManager.translate(aabb.minX, aabb.minY, -1 + aabb.maxZ);
 
 				GlStateManager.scale(width, height, depth);
 
-//				GlStateManager.scale(positions.size() * 1.1, positions.size() * 1.1, positions.size() * 1.1);
-
-
-
-//				GlStateManager.translate(aabb.minX, aabb.minY, aabb.minZ);
-				
 				renderer.renderBlockBrightness(Blocks.CONCRETE.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.RED), 1f);
+
+				GlStateManager.popMatrix();
+			}
+
+			if (LinearConfig.Settings.endPositionHighlight)
+			{
+				GlStateManager.pushMatrix();
+				GlStateManager.translate(-d0, -d1, -d2);
+				GlStateManager.translate(end.getX(), end.getY(), end.getZ());
+
+				if (Math.sqrt(player.getPosition().distanceSq(end)) > 40)
+				{
+					GlStateManager.scale(1.1, 1.1, 1.1);
+					GlStateManager.translate(-0.05, -0.05, 0.95);
+				}
+				else if (Math.sqrt(player.getPosition().distanceSq(end)) > 20)
+				{
+					GlStateManager.scale(1.01, 1.01, 1.01);
+					GlStateManager.translate(-0.005, -0.005, 0.995);
+				}
+				else
+				{
+					GlStateManager.scale(1.001, 1.001, 1.001);
+					GlStateManager.translate(-0.0005, -0.0005, 0.9995);
+				}
+				GL14.glBlendColor(1f, 1f, 1f, 0.4f);
+
+				IBlockState state = stateToRender;
+				state = stateToRender.getActualState(renderWorld, end);
+
+				if (!renderWorld.isAirBlock(end))
+				{
+					AxisAlignedBB aabb = state.getBoundingBox(renderWorld, end);
+					double width = aabb.maxX - aabb.minX;
+					double height = aabb.maxY - aabb.minY;
+					double depth = aabb.maxZ - aabb.minZ;
+
+					Vec3d center = aabb.getCenter();
+					GlStateManager.translate(aabb.minX, aabb.minY, -1 + aabb.maxZ);
+					GlStateManager.scale(width, height, depth);
+				}
+
+				renderer.renderBlockBrightness(Blocks.CONCRETE.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.BLUE), 1f);
 
 				GlStateManager.popMatrix();
 			}
