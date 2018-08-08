@@ -120,6 +120,9 @@ public class ClientEvents
 	@SubscribeEvent
 	public void renderGameOverlay(RenderGameOverlayEvent event)
 	{
+		if(event.getType() == ElementType.CHAT)
+			return;
+		
 		float partialticks = event.getPartialTicks();
 		ScaledResolution res = event.getResolution();
 		EntityPlayer player = Minecraft.getMinecraft().player;
@@ -168,38 +171,6 @@ public class ClientEvents
 		GlStateManager.color(1f, 1f, 1f);
 	}
 
-	@SideOnly(Side.CLIENT)
-	@SubscribeEvent
-	public void renderTextOverlay(RenderGameOverlayEvent.Text event)
-	{
-		// float partialticks = event.getPartialTicks();
-		// ScaledResolution res = event.getResolution();
-		// EntityPlayer player = Minecraft.getMinecraft().player;
-		// Minecraft mc = Minecraft.getMinecraft();
-		//
-		// GlStateManager.pushMatrix();
-		// GlStateManager.enableAlpha();
-		// GlStateManager.alphaFunc(516, 0.1F);
-		//
-		// System.out.println(res.getScaledWidth() + ", " +
-		// res.getScaledHeight() + ", " + res.getScaleFactor());
-		//
-		// if (LinearHelper.hasValidItem(player) &&
-		// LinearHelper.getBuildMode(player) != null)
-		// {
-		// int x = (int) (2.5*res.getScaleFactor());
-		// int y = (int) (108 *res.getScaleFactor());
-		//
-		// Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("Build
-		// Mode: " + I18n.translateToLocal("desc." +
-		// LinearHelper.getBuildMode(player).getName()), x, y, 16777215);
-		// }
-		//
-		// Minecraft.getMinecraft().renderEngine.bindTexture(new
-		// ResourceLocation("textures/gui/icons.png"));
-		// GlStateManager.color(1f, 1f, 1f);
-		// GlStateManager.popMatrix();
-	}
 
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent
@@ -230,7 +201,6 @@ public class ClientEvents
 
 			Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 			BlockRendererDispatcher renderer = Minecraft.getMinecraft().getBlockRendererDispatcher();
-			BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();
 
 			GlStateManager.pushMatrix();
 			GlStateManager.enableBlend();
@@ -239,11 +209,6 @@ public class ClientEvents
 				GlStateManager.blendFunc(GL11.GL_CONSTANT_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
 			else
 				GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-
-			// GlStateManager.blendFunc(world.getWorldTime() % 24000d / 12000 <
-			// 1d ? GlStateManager.SourceFactor.SRC_COLOR :
-			// GlStateManager.SourceFactor.ONE,
-			// GlStateManager.DestFactor.ONE_MINUS_CONSTANT_ALPHA);
 
 			for (BlockPos toPlace : positions)
 			{
@@ -268,7 +233,6 @@ public class ClientEvents
 				GlStateManager.pushMatrix();
 				GlStateManager.translate(-d0, -d1, -d2);
 				GlStateManager.translate(toPlace.getX(), toPlace.getY(), toPlace.getZ());
-				// GlStateManager.rotate(-90, 0f, 1f, 0f);
 
 				if (Math.sqrt(player.getPosition().distanceSq(toPlace)) > 40)
 				{
@@ -350,8 +314,6 @@ public class ClientEvents
 				GlStateManager.popMatrix();
 			}
 
-			GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-			ForgeHooksClient.setRenderLayer(layer);
 			GlStateManager.disableBlend();
 			GlStateManager.popMatrix();
 		}
