@@ -1,0 +1,13 @@
+key.linear.category=Linear
+key.linear.switchmode.desc=Переключить режим строительства
+key.linear.enablebuilding.desc=Включить мульти-размещение
+
+desc.line_3_axes=Линия (3 оси)
+desc.line_2_axes=Линия (2 оси)
+desc.line_1_axis=Линия (1 ось)
+desc.wall_3_axes=Стена (3 оси)
+desc.wall_2_axes=Стена (2 оси)
+
+desc.linear.place=Мульти-размещение
+desc.linear.on=Вкл.
+desc.linear.off=Выкл.
