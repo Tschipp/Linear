@@ -28,7 +28,7 @@ public class Configs {
 		@Comment("Max distance between player and placed blocks (only applies to Survival mode)")
 		public double maxDistance=20;
 		
-		@Comment("End position highlight (blue)")
+		@Comment("Enable/disable end position highlight (blue)")
 		public boolean endPositionHighlight=true;
 		
 		@Comment("Build mode indicator xCoord")
@@ -36,6 +36,28 @@ public class Configs {
 		
 		@Comment("Build mode indicator yCoord")
 		public float indicatorYCoord=1045;
+		
+		@Comment("Multi-Place-state indicator xCoord")
+		public float multiplaceXCoord=10f;
+		
+		@Comment("Multi-Place-state indicator yCoord")
+		public float multiplaceYCoord=1035;
+		
+		@Comment("Build modes that are enabled by default")
+		public String[] enabledBuildModes=new String[]
+				{
+						"line_3_axes",
+						"line_2_axes",
+						"line_1_axis",
+						"wall_3_axes",
+						"wall_2_axes"
+				};
+		
+		@Comment("Hide Build Mode indicator")
+		public boolean hideModeIndicator=false;
+		
+		@Comment("Hide Multi-Place-state indicator")
+		public boolean hideMultiPlaceIndicator=false;
 	}
 	
 	public static class WhiteList

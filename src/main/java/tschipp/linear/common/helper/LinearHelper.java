@@ -19,6 +19,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -96,6 +97,16 @@ public class LinearHelper
 		return null;
 	}
 
+	public static boolean isBuildingActivated(EntityPlayer player)
+	{
+		IBuildData data = getBuildData(player);
+		if (data != null)
+		{
+			return data.isBuildingActivated();
+		}
+		return false;
+	}
+
 	public static ArrayList<BlockPos> getBlocksBetween(World world, IBlockState state, BlockPos a, BlockPos b, BuildMode mode, EntityPlayer player)
 	{
 		if (a.equals(new BlockPos(-1, -1, -1)) || b.equals(new BlockPos(-1, -1, -1)))
@@ -106,6 +117,10 @@ public class LinearHelper
 
 		Set<BlockPos> set = new HashSet<BlockPos>();
 		int axis = mode.getAxis();
+
+		Block block = state.getBlock();
+
+		EnumFacing facing = LinearHelper.getFacing(player);
 
 		boolean yFlag = false;
 		BlockPos c = null;
@@ -175,15 +190,15 @@ public class LinearHelper
 			else
 				toPlace = new BlockPos(x, y, z);
 
-			if ((world.getBlockState(toPlace).getBlock().isReplaceable(world, toPlace) && state.getBlock().canPlaceBlockAt(world, toPlace)) || mode.isPlane())
+			if ((world.mayPlace(block, toPlace, false, facing, null)) || mode.isPlane())
 				set.add(toPlace);
 
 		}
 
-		if (world.getBlockState(a).getBlock().isReplaceable(world, a) && state.getBlock().canPlaceBlockAt(world, a) && axis == 3)
+		if (world.mayPlace(block, a, false, facing, null) && axis == 3)
 			set.add(a);
 
-		if (world.getBlockState(b).getBlock().isReplaceable(world, b) && state.getBlock().canPlaceBlockAt(world, b) && axis == 3)
+		if (world.mayPlace(block, b, false, facing, null) && axis == 3)
 			set.add(b);
 
 		if (mode.isPlane())
@@ -217,7 +232,7 @@ public class LinearHelper
 
 		}
 
-		set.removeIf(pos -> !world.getBlockState(pos).getBlock().isReplaceable(world, pos) || !state.getBlock().canPlaceBlockAt(world, pos));
+		set.removeIf(pos -> !world.mayPlace(block, pos, false, facing, null));
 
 		ArrayList<BlockPos> l = new ArrayList<BlockPos>(set);
 
@@ -281,10 +296,9 @@ public class LinearHelper
 		return newSet;
 	}
 
-	@SideOnly(Side.CLIENT)
 	public static BlockPos getLookPos(EntityPlayer player, boolean midair)
 	{
-		RayTraceResult ray = player.rayTrace(LinearHelper.getPlacementRange(player), 0);
+		RayTraceResult ray = getLookRay(player);
 		if (ray == null)
 			return new BlockPos(-1, -1, -1);
 
@@ -298,16 +312,40 @@ public class LinearHelper
 		return pos;
 	}
 
+	public static RayTraceResult getLookRay(EntityPlayer player)
+	{
+
+		World world = player.world;
+		Vec3d look = player.getLookVec();
+		Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+		Vec3d end = new Vec3d(player.posX + look.x * LinearHelper.getPlacementRange(player), player.posY + player.getEyeHeight() + look.y * LinearHelper.getPlacementRange(player), player.posZ + look.z * LinearHelper.getPlacementRange(player));
+		return world.rayTraceBlocks(start, end, false, false, true);
+	}
+
+	public static EnumFacing getFacing(EntityPlayer player)
+	{
+		RayTraceResult ray = getLookRay(player);
+		if (ray != null)
+		{
+			return ray.sideHit;
+		}
+		return EnumFacing.DOWN;
+	}
+
 	public static IBlockState getState(EntityPlayer player)
 	{
 		if (hasValidItem(player))
 		{
-			ItemStack stack = getValidItem(player);
+			RayTraceResult ray = getLookRay(player);
+			if (ray != null)
+			{
+				ItemStack stack = getValidItem(player);
 
-			Block block = Block.getBlockFromItem(stack.getItem());
+				Block block = Block.getBlockFromItem(stack.getItem());
 
-			IBlockState state = block.getStateForPlacement(player.world, player.getPosition(), EnumFacing.UP, 0, 0, 0, stack.getMetadata(), player, getHand(player));
-			return state;
+				IBlockState state = block.getStateForPlacement(player.world, getLookPos(player, LinearHelper.canPlaceInMidair(player)), ray.sideHit, 0, 0, 0, stack.getMetadata(), player, getHand(player));
+				return state;
+			}
 		}
 		return null;
 	}
@@ -450,7 +488,6 @@ public class LinearHelper
 		return null;
 	}
 
-	@Nullable
 	public static void cycleBuildMode(EntityPlayer player)
 	{
 		if (hasBuildData(player))
@@ -478,5 +515,20 @@ public class LinearHelper
 				}
 			}
 		}
+	}
+
+	public static BuildMode[] getBuildModesFromConfig()
+	{
+		ArrayList<BuildMode> list = new ArrayList<BuildMode>();
+
+		for (String s : LinearConfig.Settings.enabledBuildModes)
+		{
+			BuildMode m = BuildMode.getByName(s);
+			if (m != null)
+				list.add(m);
+		}
+
+		BuildMode[] modes = list.toArray(new BuildMode[list.size()]);
+		return modes;
 	}
 }

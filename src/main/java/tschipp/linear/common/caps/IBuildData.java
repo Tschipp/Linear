@@ -41,4 +41,8 @@ public interface IBuildData
 	
 	public void setMaxDistance(double num);
 	
+	public boolean isBuildingActivated();
+	
+	public void setBuildingActivated(boolean isActive);
+	
 }

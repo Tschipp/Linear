@@ -5,13 +5,14 @@ import javax.annotation.Nullable;
 import net.minecraft.world.GameType;
 import tschipp.linear.common.config.LinearConfig;
 import tschipp.linear.common.helper.BuildMode;
+import tschipp.linear.common.helper.LinearHelper;
 
 public class BuildData implements IBuildData
 {
 
 	private BuildMode currentMode = BuildMode.LINE3;
 
-	private BuildMode[] enabledModes = BuildMode.values();
+	private BuildMode[] enabledModes = LinearHelper.getBuildModesFromConfig();
 
 	private boolean isUsingConfig = true;
 
@@ -24,6 +25,8 @@ public class BuildData implements IBuildData
 	private int maxBlocks = LinearConfig.Settings.maxBlocks;
 
 	private double maxDistance = LinearConfig.Settings.maxDistance;
+	
+	private boolean isBuildingActive = true;
 
 	@Nullable
 	@Override
@@ -115,6 +118,21 @@ public class BuildData implements IBuildData
 	public void setEnabledBuildModes(BuildMode[] modes)
 	{
 		enabledModes = modes;
+		if(enabledModes.length == 0)
+		{
+			currentMode = null;
+			return;
+		}
+		
+		boolean contained = false;
+		for(BuildMode m : enabledModes)
+		{
+			if(m == currentMode)
+				contained = true;
+		}
+		
+		if(!contained)
+			currentMode = enabledModes[0];
 	}
 
 	@Override
@@ -199,6 +217,18 @@ public class BuildData implements IBuildData
 	public void setMaxDistance(double num)
 	{
 		this.maxDistance = num;
+	}
+
+	@Override
+	public boolean isBuildingActivated()
+	{
+		return isBuildingActive;
+	}
+
+	@Override
+	public void setBuildingActivated(boolean isActive)
+	{
+		this.isBuildingActive = isActive;
 	}
 
 }

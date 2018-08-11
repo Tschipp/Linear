@@ -1,5 +1,7 @@
 package tschipp.linear.common.event;
 
+import java.util.Arrays;
+
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -22,6 +24,7 @@ import tschipp.linear.common.caps.BuildDataProvider;
 import tschipp.linear.common.caps.IBuildData;
 import tschipp.linear.common.caps.StartingPositionProvider;
 import tschipp.linear.common.config.LinearConfig;
+import tschipp.linear.common.helper.BuildMode;
 import tschipp.linear.common.helper.LinearHelper;
 
 public class CommonEvents
@@ -31,7 +34,7 @@ public class CommonEvents
 	public void onRightClick(RightClickBlock event)
 	{
 		EntityPlayer player = event.getEntityPlayer();
-		if (player.isSneaking() && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
+		if (player.isSneaking() && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player) && LinearHelper.isBuildingActivated(player))
 		{
 			ItemStack stack = player.getHeldItemMainhand();
 			ItemStack off = player.getHeldItemOffhand();
@@ -63,30 +66,62 @@ public class CommonEvents
 					LinearHelper.clearPos(player);
 			}
 
-			if (LinearHelper.hasBuildData(player))
+			if (!player.world.isRemote)
 			{
-				IBuildData data = LinearHelper.getBuildData(player);
-				if (data.isUsingConfig())
+				if (LinearHelper.hasBuildData(player))
 				{
-					if (data.canPlaceInMidair(GameType.SURVIVAL) != LinearConfig.Settings.placeInMidairSurvival)
-						data.setPlaceInMidair(GameType.SURVIVAL, LinearConfig.Settings.placeInMidairSurvival);
+					IBuildData data = LinearHelper.getBuildData(player);
+					if (data.isUsingConfig())
+					{
+						boolean didChange = false;
 
-					if (data.canPlaceInMidair(GameType.CREATIVE) != LinearConfig.Settings.placeInMidairCreative)
-						data.setPlaceInMidair(GameType.CREATIVE, LinearConfig.Settings.placeInMidairCreative);
+						if (data.canPlaceInMidair(GameType.SURVIVAL) != LinearConfig.Settings.placeInMidairSurvival)
+						{
+							data.setPlaceInMidair(GameType.SURVIVAL, LinearConfig.Settings.placeInMidairSurvival);
+							didChange = true;
+						}
 
-					if (data.getPlacementRange(GameType.SURVIVAL) != LinearConfig.Settings.blockPlacementRangeSurvival)
-						data.setPlacementRange(GameType.SURVIVAL, LinearConfig.Settings.blockPlacementRangeSurvival);
+						if (data.canPlaceInMidair(GameType.CREATIVE) != LinearConfig.Settings.placeInMidairCreative)
+						{
+							data.setPlaceInMidair(GameType.CREATIVE, LinearConfig.Settings.placeInMidairCreative);
+							didChange = true;
+						}
 
-					if (data.getPlacementRange(GameType.CREATIVE) != LinearConfig.Settings.blockPlacementRangeCreative)
-						data.setPlacementRange(GameType.CREATIVE, LinearConfig.Settings.blockPlacementRangeCreative);
+						if (data.getPlacementRange(GameType.SURVIVAL) != LinearConfig.Settings.blockPlacementRangeSurvival)
+						{
+							data.setPlacementRange(GameType.SURVIVAL, LinearConfig.Settings.blockPlacementRangeSurvival);
+							didChange = true;
+						}
 
-					if (data.getMaxBlocksPlaced() != LinearConfig.Settings.maxBlocks)
-						data.setMaxBlocksPlaced(LinearConfig.Settings.maxBlocks);
+						if (data.getPlacementRange(GameType.CREATIVE) != LinearConfig.Settings.blockPlacementRangeCreative)
+						{
+							data.setPlacementRange(GameType.CREATIVE, LinearConfig.Settings.blockPlacementRangeCreative);
+							didChange = true;
+						}
 
-					if (data.getMaxDistance() != LinearConfig.Settings.maxDistance)
-						data.setMaxDistance(LinearConfig.Settings.maxDistance);
+						if (data.getMaxBlocksPlaced() != LinearConfig.Settings.maxBlocks)
+						{
+							data.setMaxBlocksPlaced(LinearConfig.Settings.maxBlocks);
+							didChange = true;
+						}
+
+						if (data.getMaxDistance() != LinearConfig.Settings.maxDistance)
+						{
+							data.setMaxDistance(LinearConfig.Settings.maxDistance);
+							didChange = true;
+						}
+						
+						if(!Arrays.equals(data.getEnabledBuildModes(), LinearHelper.getBuildModesFromConfig()))
+						{
+							data.setEnabledBuildModes(LinearHelper.getBuildModesFromConfig());
+							didChange = true;
+						}
+						
+						if(didChange)
+							LinearHelper.syncBuildDataWithClient(player);
+					}
+
 				}
-
 			}
 
 		}
@@ -109,14 +144,14 @@ public class CommonEvents
 	{
 		EntityPlayer oldP = event.getOriginal();
 		EntityPlayer newP = event.getEntityPlayer();
-		
+
 		NBTTagCompound tag = (NBTTagCompound) BuildDataProvider.BUILD_CAPABILITY.getStorage().writeNBT(BuildDataProvider.BUILD_CAPABILITY, LinearHelper.getBuildData(oldP), null);
 		BuildDataProvider.BUILD_CAPABILITY.getStorage().readNBT(BuildDataProvider.BUILD_CAPABILITY, LinearHelper.getBuildData(newP), null, tag);
 		if (!newP.world.isRemote)
 			LinearHelper.syncBuildDataWithClient(newP);
 
 	}
-	
+
 	@SubscribeEvent
 	public void onPlayerRespawn(PlayerRespawnEvent event)
 	{

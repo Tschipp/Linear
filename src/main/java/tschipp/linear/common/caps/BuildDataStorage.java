@@ -35,6 +35,7 @@ public class BuildDataStorage implements IStorage<IBuildData>
 		tag.setBoolean("midairSurvival", ins.canPlaceInMidair(GameType.SURVIVAL));
 		tag.setInteger("maxBlocks", ins.getMaxBlocksPlaced());
 		tag.setDouble("maxDistance", ins.getMaxDistance());
+		tag.setBoolean("buildingActivated", ins.isBuildingActivated());
 
 		return tag;
 	}
@@ -63,6 +64,7 @@ public class BuildDataStorage implements IStorage<IBuildData>
 		ins.setPlaceInMidair(GameType.SURVIVAL, tag.getBoolean("midairSurvival"));
 		ins.setMaxBlocksPlaced(tag.getInteger("maxBlocks"));
 		ins.setMaxDistance(tag.getDouble("maxDistance"));
+		ins.setBuildingActivated(tag.getBoolean("buildingActivated"));
 	}
 
 }

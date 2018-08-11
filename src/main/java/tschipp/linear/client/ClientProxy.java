@@ -15,11 +15,6 @@ public class ClientProxy extends CommonProxy {
 	public void preInit(FMLPreInitializationEvent event)
 	{
 		super.preInit(event);
-//		CarryOn.network = NetworkRegistry.INSTANCE.newSimpleChannel("CarryOn");
-//		
-//		CarryOn.network.registerMessage(SyncKeybindPacketHandler.class, SyncKeybindPacket.class, 0, Side.SERVER);
-//		CarryOn.network.registerMessage(CarrySlotPacketHandler.class, CarrySlotPacket.class, 1, Side.CLIENT);
-//		CarryOn.network.registerMessage(ScriptReloadPacketHandler.class, ScriptReloadPacket.class, 2, Side.CLIENT);
 
 		MinecraftForge.EVENT_BUS.register(new ClientEvents());
 	}

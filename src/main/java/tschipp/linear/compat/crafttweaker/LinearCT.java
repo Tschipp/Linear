@@ -40,6 +40,7 @@ public class LinearCT
 			if (buildMode != null)
 			{
 				data.enableBuildMode(buildMode);
+				data.setUsingConfig(false);
 
 				EntityPlayer p = getPlayer(player);
 				if (p instanceof EntityPlayerMP)
@@ -59,6 +60,7 @@ public class LinearCT
 			if (buildMode != null)
 			{
 				data.disableBuildMode(buildMode);
+				data.setUsingConfig(false);
 
 				EntityPlayer p = getPlayer(player);
 				if (p instanceof EntityPlayerMP)
@@ -74,6 +76,7 @@ public class LinearCT
 		if (data != null)
 		{
 			data.clearBuildModes();
+			data.setUsingConfig(false);
 
 			EntityPlayer p = getPlayer(player);
 			if (p instanceof EntityPlayerMP)
@@ -89,6 +92,7 @@ public class LinearCT
 		if (data != null)
 		{
 			data.enableAllBuildModes();
+			data.setUsingConfig(false);
 
 			EntityPlayer p = getPlayer(player);
 			if (p instanceof EntityPlayerMP)

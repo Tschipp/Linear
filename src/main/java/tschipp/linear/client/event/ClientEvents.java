@@ -27,8 +27,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
-import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
@@ -39,6 +37,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import tschipp.linear.Linear;
 import tschipp.linear.client.keybind.LinearKeybind;
+import tschipp.linear.common.caps.IBuildData;
 import tschipp.linear.common.config.LinearConfig;
 import tschipp.linear.common.helper.FakeRenderWorld;
 import tschipp.linear.common.helper.LinearHelper;
@@ -57,7 +56,7 @@ public class ClientEvents
 			return;
 
 		EntityPlayer player = Minecraft.getMinecraft().player;
-		if (player.isSneaking())
+		if (player.isSneaking() && LinearHelper.isBuildingActivated(player))
 		{
 			ItemStack stack = player.getHeldItemMainhand();
 			ItemStack off = player.getHeldItemOffhand();
@@ -114,15 +113,26 @@ public class ClientEvents
 				LinearHelper.syncBuildData(player);
 			}
 		}
+
+		if (LinearKeybind.enableBuilding.isPressed())
+		{
+			EntityPlayer player = Minecraft.getMinecraft().player;
+			if (player != null)
+			{
+				IBuildData data = LinearHelper.getBuildData(player);
+				data.setBuildingActivated(data.isBuildingActivated() ? false : true);
+				LinearHelper.syncBuildData(player);
+			}
+		}
 	}
 
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent
 	public void renderGameOverlay(RenderGameOverlayEvent event)
 	{
-		if(event.getType() == ElementType.CHAT)
+		if (event.getType() == ElementType.CHAT)
 			return;
-		
+
 		float partialticks = event.getPartialTicks();
 		ScaledResolution res = event.getResolution();
 		EntityPlayer player = Minecraft.getMinecraft().player;
@@ -134,43 +144,55 @@ public class ClientEvents
 		float factorX = (float) (res.getScaledWidth_double() / 1920f);
 		float factorY = (float) (res.getScaledHeight_double() / 1080f);
 
-		if (LinearHelper.hasValidItem(player) && LinearHelper.getBuildMode(player) != null)
+		float x = (factorX * LinearConfig.Settings.multiplaceXCoord);
+		float y = (factorY * LinearConfig.Settings.multiplaceYCoord);
+
+		GlStateManager.pushMatrix();
+		
+		if (LinearHelper.hasValidItem(player) && !LinearConfig.Settings.hideMultiPlaceIndicator)
+			Minecraft.getMinecraft().fontRenderer.drawStringWithShadow(I18n.translateToLocal("desc.linear.place") + ": " + I18n.translateToLocal(LinearHelper.isBuildingActivated(player) ? "desc.linear.on" : "desc.linear.off"), x, y - 10, 16777215);
+
+		if (LinearHelper.isBuildingActivated(player))
 		{
-			float x = (factorX * LinearConfig.Settings.indicatorXCoord);
-			float y = (factorY * LinearConfig.Settings.indicatorYCoord);
+			if (LinearHelper.hasValidItem(player) && LinearHelper.getBuildMode(player) != null && !LinearConfig.Settings.hideModeIndicator)
+			{
+				x = (factorX * LinearConfig.Settings.indicatorXCoord);
+				y = (factorY * LinearConfig.Settings.indicatorYCoord);
+				
+				Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("Build Mode: " + I18n.translateToLocal("desc." + LinearHelper.getBuildMode(player).getName()), x, y, 16777215);
+			}
 
-			Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("Build Mode: " + I18n.translateToLocal("desc." + LinearHelper.getBuildMode(player).getName()), x, y, 16777215);
+			if (player.isSneaking() && LinearHelper.hasStartPos(player) && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
+			{
+				IBlockState state = LinearHelper.getState(player);
+
+				if (state == null)
+					return;
+
+				BlockPos start = LinearHelper.getStartPos(player);
+				BlockPos end = LinearHelper.getLookPos(player, LinearHelper.canPlaceInMidair(player));
+				ItemStack stack = LinearHelper.getValidItem(player);
+
+				ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(player.world, state, start, end, LinearHelper.getBuildMode(player), player);
+				ArrayList<BlockPos> valids = LinearHelper.getValidPositions(positions, player);
+
+				Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+				RenderHelper.enableGUIStandardItemLighting();
+
+				if (event.getType() == ElementType.HOTBAR)
+					Minecraft.getMinecraft().getRenderItem().renderItemAndEffectIntoGUI(stack, (int) (factorX * 980), (int) (factorY * 514));
+
+				RenderHelper.disableStandardItemLighting();
+
+				Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("x " + valids.size(), (int) (factorX * 1038), (int) (factorY * 528), positions.size() > valids.size() ? 16711680 : 16777215);
+
+			}
+			GlStateManager.color(1f, 1f, 1f);
 		}
-
-		if (player.isSneaking() && LinearHelper.hasStartPos(player) && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
-		{
-			IBlockState state = LinearHelper.getState(player);
-
-			if (state == null)
-				return;
-
-			BlockPos start = LinearHelper.getStartPos(player);
-			BlockPos end = LinearHelper.getLookPos(player, LinearHelper.canPlaceInMidair(player));
-			ItemStack stack = LinearHelper.getValidItem(player);
-
-			ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(player.world, state, start, end, LinearHelper.getBuildMode(player), player);
-			ArrayList<BlockPos> valids = LinearHelper.getValidPositions(positions, player);
-
-			Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-			RenderHelper.enableGUIStandardItemLighting();
-
-			if (event.getType() == ElementType.HOTBAR)
-				Minecraft.getMinecraft().getRenderItem().renderItemAndEffectIntoGUI(stack, (int) (factorX * 980), (int) (factorY * 514));
-
-			RenderHelper.disableStandardItemLighting();
-			
-			Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("x " + valids.size(), (int) (factorX * 1038), (int) (factorY * 528), positions.size() > valids.size() ? 16711680 : 16777215);
-
-		}
+		
 		Minecraft.getMinecraft().renderEngine.bindTexture(new ResourceLocation("textures/gui/icons.png"));
-		GlStateManager.color(1f, 1f, 1f);
+		GlStateManager.popMatrix();
 	}
-
 
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent
@@ -178,144 +200,165 @@ public class ClientEvents
 	{
 		EntityPlayer player = Minecraft.getMinecraft().player;
 
-		if (player.isSneaking() && LinearHelper.hasStartPos(player) && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
+		if (LinearHelper.isBuildingActivated(player))
 		{
-			IBlockState stateToRender = LinearHelper.getState(player);
-			if (stateToRender == null)
-				return;
+			if (player.isSneaking() && LinearHelper.hasStartPos(player) && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
+			{
+				IBlockState stateToRender = LinearHelper.getState(player);
+				if (stateToRender == null)
+					return;
 
-			BlockPos start = LinearHelper.getStartPos(player);
-			BlockPos end = LinearHelper.getLookPos(player, LinearHelper.canPlaceInMidair(player));
+				BlockPos start = LinearHelper.getStartPos(player);
+				BlockPos end = LinearHelper.getLookPos(player, LinearHelper.canPlaceInMidair(player));
 
-			World world = player.world;
+				World world = player.world;
 
-			ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(world, stateToRender, start, end, LinearHelper.getBuildMode(player), player);
+				ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(world, stateToRender, start, end, LinearHelper.getBuildMode(player), player);
 
-			ArrayList<BlockPos> invalids = LinearHelper.getInvalidPositions(positions, player);
+				ArrayList<BlockPos> invalids = LinearHelper.getInvalidPositions(positions, player);
 
-			FakeRenderWorld renderWorld = new FakeRenderWorld(world, positions, stateToRender);
+				FakeRenderWorld renderWorld = new FakeRenderWorld(world, positions, stateToRender);
 
-			double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * event.getPartialTicks();
-			double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * event.getPartialTicks();
-			double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * event.getPartialTicks();
+				double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * event.getPartialTicks();
+				double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * event.getPartialTicks();
+				double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * event.getPartialTicks();
 
-			Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-			BlockRendererDispatcher renderer = Minecraft.getMinecraft().getBlockRendererDispatcher();
+				Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+				BlockRendererDispatcher renderer = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
-			GlStateManager.pushMatrix();
-			GlStateManager.enableBlend();
+				GlStateManager.pushMatrix();
+				GlStateManager.enableBlend();
 
-			if (stateToRender.getBlock().getBlockLayer() != BlockRenderLayer.TRANSLUCENT)
+				if (stateToRender.getBlock().getBlockLayer() != BlockRenderLayer.TRANSLUCENT)
+					GlStateManager.blendFunc(GL11.GL_CONSTANT_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
+				else
+					GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+				for (BlockPos toPlace : positions)
+				{
+					GlStateManager.pushMatrix();
+					GlStateManager.translate(-d0, -d1, -d2);
+					GlStateManager.translate(toPlace.getX(), toPlace.getY(), toPlace.getZ());
+					GlStateManager.rotate(-90, 0f, 1f, 0f);
+					GL14.glBlendColor(1f, 1f, 1f, 0.65f);
+
+					IBlockState state = stateToRender;
+					try
+					{
+						state = stateToRender.getActualState(renderWorld, toPlace);
+					}
+					catch (Exception e)
+					{
+					}
+
+					renderer.renderBlockBrightness(state, 1f);
+
+					GlStateManager.popMatrix();
+				}
+
 				GlStateManager.blendFunc(GL11.GL_CONSTANT_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
-			else
-				GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
-			for (BlockPos toPlace : positions)
-			{
-				GlStateManager.pushMatrix();
-				GlStateManager.translate(-d0, -d1, -d2);
-				GlStateManager.translate(toPlace.getX(), toPlace.getY(), toPlace.getZ());
-				GlStateManager.rotate(-90, 0f, 1f, 0f);
-				GL14.glBlendColor(1f, 1f, 1f, 0.65f);
-
-				IBlockState state = stateToRender;
-				state = stateToRender.getActualState(renderWorld, toPlace);
-
-				renderer.renderBlockBrightness(state, 1f);
-
-				GlStateManager.popMatrix();
-			}
-
-			GlStateManager.blendFunc(GL11.GL_CONSTANT_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
-
-			for (BlockPos toPlace : invalids)
-			{
-				GlStateManager.pushMatrix();
-				GlStateManager.translate(-d0, -d1, -d2);
-				GlStateManager.translate(toPlace.getX(), toPlace.getY(), toPlace.getZ());
-
-				if (Math.sqrt(player.getPosition().distanceSq(toPlace)) > 40)
+				for (BlockPos toPlace : invalids)
 				{
-					GlStateManager.scale(1.1, 1.1, 1.1);
-					GlStateManager.translate(-0.05, -0.05, 0.95);
-				}
-				else if (Math.sqrt(player.getPosition().distanceSq(toPlace)) > 20)
-				{
-					GlStateManager.scale(1.01, 1.01, 1.01);
-					GlStateManager.translate(-0.005, -0.005, 0.995);
-				}
-				else
-				{
-					GlStateManager.scale(1.001, 1.001, 1.001);
-					GlStateManager.translate(-0.0005, -0.0005, 0.9995);
-				}
-				GL14.glBlendColor(1f, 1f, 1f, 0.5f);
+					GlStateManager.pushMatrix();
+					GlStateManager.translate(-d0, -d1, -d2);
+					GlStateManager.translate(toPlace.getX(), toPlace.getY(), toPlace.getZ());
 
-				IBlockState state = stateToRender;
-				state = stateToRender.getActualState(renderWorld, toPlace);
+					if (Math.sqrt(player.getPosition().distanceSq(toPlace)) > 40)
+					{
+						GlStateManager.scale(1.1, 1.1, 1.1);
+						GlStateManager.translate(-0.05, -0.05, 0.95);
+					}
+					else if (Math.sqrt(player.getPosition().distanceSq(toPlace)) > 20)
+					{
+						GlStateManager.scale(1.01, 1.01, 1.01);
+						GlStateManager.translate(-0.005, -0.005, 0.995);
+					}
+					else
+					{
+						GlStateManager.scale(1.001, 1.001, 1.001);
+						GlStateManager.translate(-0.0005, -0.0005, 0.9995);
+					}
+					GL14.glBlendColor(1f, 1f, 1f, 0.5f);
 
-				AxisAlignedBB aabb = state.getBoundingBox(renderWorld, toPlace);
+					IBlockState state = stateToRender;
+					try
+					{
+						state = stateToRender.getActualState(renderWorld, toPlace);
+					}
+					catch (Exception e)
+					{
+					}
 
-				double width = aabb.maxX - aabb.minX;
-				double height = aabb.maxY - aabb.minY;
-				double depth = aabb.maxZ - aabb.minZ;
+					AxisAlignedBB aabb = state.getBoundingBox(renderWorld, toPlace);
 
-				Vec3d center = aabb.getCenter();
-
-				GlStateManager.translate(aabb.minX, aabb.minY, -1 + aabb.maxZ);
-
-				GlStateManager.scale(width, height, depth);
-
-				renderer.renderBlockBrightness(Blocks.CONCRETE.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.RED), 1f);
-
-				GlStateManager.popMatrix();
-			}
-
-			if (LinearConfig.Settings.endPositionHighlight)
-			{
-				GlStateManager.pushMatrix();
-				GlStateManager.translate(-d0, -d1, -d2);
-				GlStateManager.translate(end.getX(), end.getY(), end.getZ());
-
-				if (Math.sqrt(player.getPosition().distanceSq(end)) > 40)
-				{
-					GlStateManager.scale(1.1, 1.1, 1.1);
-					GlStateManager.translate(-0.05, -0.05, 0.95);
-				}
-				else if (Math.sqrt(player.getPosition().distanceSq(end)) > 20)
-				{
-					GlStateManager.scale(1.01, 1.01, 1.01);
-					GlStateManager.translate(-0.005, -0.005, 0.995);
-				}
-				else
-				{
-					GlStateManager.scale(1.001, 1.001, 1.001);
-					GlStateManager.translate(-0.0005, -0.0005, 0.9995);
-				}
-				GL14.glBlendColor(1f, 1f, 1f, 0.4f);
-
-				IBlockState state = stateToRender;
-				state = stateToRender.getActualState(renderWorld, end);
-
-				if (!renderWorld.isAirBlock(end))
-				{
-					AxisAlignedBB aabb = state.getBoundingBox(renderWorld, end);
 					double width = aabb.maxX - aabb.minX;
 					double height = aabb.maxY - aabb.minY;
 					double depth = aabb.maxZ - aabb.minZ;
 
 					Vec3d center = aabb.getCenter();
+
 					GlStateManager.translate(aabb.minX, aabb.minY, -1 + aabb.maxZ);
+
 					GlStateManager.scale(width, height, depth);
+
+					renderer.renderBlockBrightness(Blocks.CONCRETE.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.RED), 1f);
+
+					GlStateManager.popMatrix();
 				}
 
-				renderer.renderBlockBrightness(Blocks.CONCRETE.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.BLUE), 1f);
+				if (LinearConfig.Settings.endPositionHighlight)
+				{
+					GlStateManager.pushMatrix();
+					GlStateManager.translate(-d0, -d1, -d2);
+					GlStateManager.translate(end.getX(), end.getY(), end.getZ());
 
+					if (Math.sqrt(player.getPosition().distanceSq(end)) > 40)
+					{
+						GlStateManager.scale(1.1, 1.1, 1.1);
+						GlStateManager.translate(-0.05, -0.05, 0.95);
+					}
+					else if (Math.sqrt(player.getPosition().distanceSq(end)) > 20)
+					{
+						GlStateManager.scale(1.01, 1.01, 1.01);
+						GlStateManager.translate(-0.005, -0.005, 0.995);
+					}
+					else
+					{
+						GlStateManager.scale(1.001, 1.001, 1.001);
+						GlStateManager.translate(-0.0005, -0.0005, 0.9995);
+					}
+					GL14.glBlendColor(1f, 1f, 1f, 0.4f);
+
+					IBlockState state = stateToRender;
+					try
+					{
+						state = stateToRender.getActualState(renderWorld, end);
+					}
+					catch (Exception e)
+					{
+					}
+
+					if (!renderWorld.isAirBlock(end))
+					{
+						AxisAlignedBB aabb = state.getBoundingBox(renderWorld, end);
+						double width = aabb.maxX - aabb.minX;
+						double height = aabb.maxY - aabb.minY;
+						double depth = aabb.maxZ - aabb.minZ;
+
+						Vec3d center = aabb.getCenter();
+						GlStateManager.translate(aabb.minX, aabb.minY, -1 + aabb.maxZ);
+						GlStateManager.scale(width, height, depth);
+					}
+
+					renderer.renderBlockBrightness(Blocks.CONCRETE.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.BLUE), 1f);
+
+					GlStateManager.popMatrix();
+				}
+
+				GlStateManager.disableBlend();
 				GlStateManager.popMatrix();
 			}
-
-			GlStateManager.disableBlend();
-			GlStateManager.popMatrix();
 		}
 
 	}
