@@ -18,22 +18,16 @@ public class GuiConfigLinear extends GuiConfig
 
 	public GuiConfigLinear(GuiScreen parent)
 	{
-		super(parent, getConfigElements(), Linear.MODID, false, false,
-				"Carry On Configuration");
+		super(parent, getConfigElements(), Linear.MODID, false, false, "Linear Configuration");
 	}
 
 	private static List<IConfigElement> getConfigElements()
 	{
 
-		final Configuration configuration = LinearConfig.EventHandler
-				.getConfiguration();
+		final Configuration configuration = LinearConfig.EventHandler.getConfiguration();
 
-		final ConfigCategory topLevelCategory = configuration
-				.getCategory(Configuration.CATEGORY_GENERAL);
-		topLevelCategory.getChildren().forEach(
-				configCategory -> configCategory
-						.setLanguageKey(GuiConfigLinear.LANG_PREFIX
-								+ configCategory.getName()));
+		final ConfigCategory topLevelCategory = configuration.getCategory(Configuration.CATEGORY_GENERAL);
+		topLevelCategory.getChildren().forEach(configCategory -> configCategory.setLanguageKey(GuiConfigLinear.LANG_PREFIX + configCategory.getName()));
 
 		return new ConfigElement(topLevelCategory).getChildElements();
 	}

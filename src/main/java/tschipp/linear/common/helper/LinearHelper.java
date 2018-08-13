@@ -343,7 +343,8 @@ public class LinearHelper
 
 				Block block = Block.getBlockFromItem(stack.getItem());
 
-				IBlockState state = block.getStateForPlacement(player.world, getLookPos(player, LinearHelper.canPlaceInMidair(player)), ray.sideHit, 0, 0, 0, stack.getMetadata(), player, getHand(player));
+				float[] hit = getHitCoords(player);
+				IBlockState state = block.getStateForPlacement(player.world, getLookPos(player, LinearHelper.canPlaceInMidair(player)), ray.sideHit, hit[0], hit[1], hit[2], stack.getMetadata(), player, getHand(player));
 				return state;
 			}
 		}
@@ -364,6 +365,18 @@ public class LinearHelper
 			return EnumHand.OFF_HAND;
 		else
 			return null;
+	}
+
+	public static float[] getHitCoords(EntityPlayer player)
+	{
+		RayTraceResult ray = getLookRay(player);
+		if (ray != null)
+		{
+			BlockPos pos = ray.getBlockPos();
+			float[] hit = new float[] { (float) (ray.hitVec.x - pos.getX()), (float) (ray.hitVec.y - pos.getY()), (float) (ray.hitVec.z - pos.getZ()) };
+			return hit;
+		}
+		return null;
 	}
 
 	public static boolean hasValidItem(EntityPlayer player)

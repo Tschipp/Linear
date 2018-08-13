@@ -6,6 +6,8 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
@@ -55,21 +57,26 @@ public class BuildLine implements IMessage, IMessageHandler<BuildLine, IMessage>
 				IBlockState state = LinearHelper.getState(player);
 				ItemStack stack = LinearHelper.getValidItem(player);
 
+				int originalCount = stack.getCount();
+				
 				ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(world, state, start, message.pos, LinearHelper.getBuildMode(player), player);
 				positions = LinearHelper.getValidPositions(positions, player);
 
 				int blocksPlaced = 0;
-
+				float[] hit = LinearHelper.getHitCoords(player);
+				
+				
 				for (BlockPos pos : positions)
 				{
 					BlockSnapshot snapshot = BlockSnapshot.getBlockSnapshot(world, pos);
 					PlaceEvent event = ForgeEventFactory.onPlayerBlockPlace(player, snapshot, EnumFacing.DOWN, LinearHelper.getHand(player));
-
+					
 					if (!event.isCanceled())
 					{
-						world.setBlockState(pos, state);
+						((ItemBlock)stack.getItem()).onItemUse(player, world, pos, LinearHelper.getHand(player), LinearHelper.getFacing(player), hit[0], hit[1], hit[2]);
 						SoundType soundtype = state.getBlock().getSoundType(state, world, pos, player);
 						world.playSound(player, pos, soundtype.getPlaceSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+						stack.setCount(originalCount);
 					}
 				}
 

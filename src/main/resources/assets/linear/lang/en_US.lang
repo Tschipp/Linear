@@ -11,3 +11,5 @@ desc.wall_2_axes=Wall (2 axes)
 desc.linear.place=Multi-placing
 desc.linear.on=On
 desc.linear.off=Off
+
+toast.unlockmode.title=Build mode unlocked!
