@@ -63,7 +63,7 @@ public class Configs {
 	public static class WhiteList
 	{
 		@Config.RequiresMcRestart()
-		@Comment("Blocks that CAN be picked up")
+		@Comment("Blocks that can be multi-placed")
 		public String[] allowedBlocks=new String[]
 				{
 				};
@@ -72,7 +72,7 @@ public class Configs {
 	public static class Blacklist
 	{
 		@Config.RequiresMcRestart()
-		@Comment("Tile Entities that cannot be picked up")
+		@Comment("Blocks that cannot be multi-placed")
     	public String[] forbiddenBlocks = new String[]
     			{
     					"minecraft:chest",

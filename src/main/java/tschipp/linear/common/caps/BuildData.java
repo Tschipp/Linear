@@ -42,7 +42,7 @@ public class BuildData implements IBuildData
 	}
 
 	@Override
-	public void enableBuildMode(BuildMode mode)
+	public boolean enableBuildMode(BuildMode mode)
 	{
 		boolean alreadyEnabled = false;
 		for (BuildMode m : enabledModes)
@@ -50,7 +50,7 @@ public class BuildData implements IBuildData
 				alreadyEnabled = true;
 
 		if (alreadyEnabled)
-			return;
+			return false;
 
 		BuildMode[] modes = new BuildMode[enabledModes.length + 1];
 		System.arraycopy(enabledModes, 0, modes, 0, enabledModes.length);
@@ -59,10 +59,12 @@ public class BuildData implements IBuildData
 
 		if (enabledModes.length == 1)
 			currentMode = enabledModes[0];
+		
+		return true;
 	}
 
 	@Override
-	public void disableBuildMode(BuildMode mode)
+	public boolean disableBuildMode(BuildMode mode)
 	{
 		if (enabledModes.length > 0)
 		{
@@ -90,22 +92,31 @@ public class BuildData implements IBuildData
 					else
 						currentMode = enabledModes[idx];
 				}
+				
+				return true;
 			}
 		}
+		
+		return false;
 	}
 
 	@Override
-	public void clearBuildModes()
+	public int clearBuildModes()
 	{
+		int disabledModes = enabledModes.length;
 		enabledModes = new BuildMode[] {};
 		currentMode = null;
+		
+		return disabledModes;
 	}
 
 	@Override
-	public void enableAllBuildModes()
+	public int enableAllBuildModes()
 	{
+		int enabledBuildModes = BuildMode.values().length - enabledModes.length;
 		enabledModes = BuildMode.values();
 		currentMode = BuildMode.values()[0];
+		return enabledBuildModes;
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import net.minecraft.block.BlockColored;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
@@ -143,7 +144,8 @@ public class ClientEvents
 
 		float factorX = (float) (res.getScaledWidth_double() / 1920f);
 		float factorY = (float) (res.getScaledHeight_double() / 1080f);
-
+		
+		
 		float x = (factorX * LinearConfig.Settings.multiplaceXCoord);
 		float y = (factorY * LinearConfig.Settings.multiplaceYCoord);
 
@@ -160,6 +162,7 @@ public class ClientEvents
 				y = (factorY * LinearConfig.Settings.indicatorYCoord);
 				
 				Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("Build Mode: " + I18n.translateToLocal("desc." + LinearHelper.getBuildMode(player).getName()), x, y, 16777215);
+			
 			}
 
 			if (player.isSneaking() && LinearHelper.hasStartPos(player) && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
@@ -226,6 +229,7 @@ public class ClientEvents
 				Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 				BlockRendererDispatcher renderer = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
+				
 				GlStateManager.pushMatrix();
 				GlStateManager.enableBlend();
 
@@ -251,7 +255,15 @@ public class ClientEvents
 					{
 					}
 
-					renderer.renderBlockBrightness(state, 1f);
+					try
+					{
+						renderer.renderBlockBrightness(state, 1f);
+					}
+					catch (Exception e)
+					{
+						GlStateManager.rotate(-90, 0f, 1f, 0f);
+						renderer.renderBlockBrightness(Blocks.STONE.getDefaultState(), 1f);
+					}
 
 					GlStateManager.popMatrix();
 				}

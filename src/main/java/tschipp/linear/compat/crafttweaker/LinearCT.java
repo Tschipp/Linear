@@ -3,12 +3,13 @@ package tschipp.linear.compat.crafttweaker;
 import crafttweaker.annotations.ZenRegister;
 import crafttweaker.api.minecraft.CraftTweakerMC;
 import crafttweaker.api.player.IPlayer;
-import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.world.GameType;
 import stanhebben.zenscript.annotations.ZenClass;
 import stanhebben.zenscript.annotations.ZenMethod;
+import tschipp.linear.client.gui.ToastUnlockBuildmode;
 import tschipp.linear.common.caps.IBuildData;
 import tschipp.linear.common.helper.BuildMode;
 import tschipp.linear.common.helper.LinearHelper;
@@ -39,13 +40,17 @@ public class LinearCT
 			BuildMode buildMode = BuildMode.getByName(mode);
 			if (buildMode != null)
 			{
-				data.enableBuildMode(buildMode);
+				boolean change = data.enableBuildMode(buildMode);
 				data.setUsingConfig(false);
 
-				EntityPlayer p = getPlayer(player);
-				if (p instanceof EntityPlayerMP)
-					LinearHelper.syncBuildDataWithClient(p);
-				
+				if (change)
+				{
+					EntityPlayer p = getPlayer(player);
+					if (p instanceof EntityPlayerMP)
+						LinearHelper.syncBuildDataWithClient(p);
+					else
+						Minecraft.getMinecraft().getToastGui().add(new ToastUnlockBuildmode(mode));
+				}
 			}
 		}
 	}
@@ -81,10 +86,10 @@ public class LinearCT
 			EntityPlayer p = getPlayer(player);
 			if (p instanceof EntityPlayerMP)
 				LinearHelper.syncBuildDataWithClient(p);
-		
+
 		}
 	}
-	
+
 	@ZenMethod
 	public static void enableAllBuildModes(IPlayer player)
 	{
@@ -97,7 +102,7 @@ public class LinearCT
 			EntityPlayer p = getPlayer(player);
 			if (p instanceof EntityPlayerMP)
 				LinearHelper.syncBuildDataWithClient(p);
-		
+
 		}
 	}
 
@@ -109,11 +114,11 @@ public class LinearCT
 		{
 			BuildMode buildMode = BuildMode.getByName(mode);
 			data.setCurrentBuildMode(buildMode);
-			
+
 			EntityPlayer p = getPlayer(player);
 			if (p instanceof EntityPlayerMP)
 				LinearHelper.syncBuildDataWithClient(p);
-		
+
 		}
 	}
 
@@ -135,11 +140,11 @@ public class LinearCT
 		if (data != null)
 		{
 			data.setUsingConfig(uses);
-			
+
 			EntityPlayer p = getPlayer(player);
 			if (p instanceof EntityPlayerMP)
 				LinearHelper.syncBuildDataWithClient(p);
-			
+
 		}
 	}
 
@@ -152,11 +157,11 @@ public class LinearCT
 			GameType mode = GameType.parseGameTypeWithDefault(gamemode.toLowerCase(), GameType.SURVIVAL);
 			data.setPlacementRange(mode, range);
 			data.setUsingConfig(false);
-			
+
 			EntityPlayer p = getPlayer(player);
 			if (p instanceof EntityPlayerMP)
 				LinearHelper.syncBuildDataWithClient(p);
-		
+
 		}
 	}
 
@@ -181,11 +186,11 @@ public class LinearCT
 			GameType mode = GameType.parseGameTypeWithDefault(gamemode.toLowerCase(), GameType.SURVIVAL);
 			data.setPlaceInMidair(mode, canPlace);
 			data.setUsingConfig(false);
-			
+
 			EntityPlayer p = getPlayer(player);
 			if (p instanceof EntityPlayerMP)
 				LinearHelper.syncBuildDataWithClient(p);
-			
+
 		}
 	}
 
@@ -209,11 +214,11 @@ public class LinearCT
 		{
 			data.setMaxBlocksPlaced(maxPlaced);
 			data.setUsingConfig(false);
-			
+
 			EntityPlayer p = getPlayer(player);
 			if (p instanceof EntityPlayerMP)
 				LinearHelper.syncBuildDataWithClient(p);
-			
+
 		}
 	}
 
@@ -236,11 +241,11 @@ public class LinearCT
 		{
 			data.setMaxDistance(distance);
 			data.setUsingConfig(false);
-			
+
 			EntityPlayer p = getPlayer(player);
 			if (p instanceof EntityPlayerMP)
 				LinearHelper.syncBuildDataWithClient(p);
-		
+
 		}
 	}
 

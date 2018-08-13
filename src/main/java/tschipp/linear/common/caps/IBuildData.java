@@ -13,13 +13,13 @@ public interface IBuildData
 	
 	public void setEnabledBuildModes(BuildMode[] modes);
 	
-	public void enableBuildMode(BuildMode mode);
+	public boolean enableBuildMode(BuildMode mode);
 	
-	public void disableBuildMode(BuildMode mode);
+	public boolean disableBuildMode(BuildMode mode);
 	
-	public void clearBuildModes();
+	public int clearBuildModes();
 	
-	public void enableAllBuildModes();
+	public int enableAllBuildModes();
 	
 	public boolean isUsingConfig();
 	
