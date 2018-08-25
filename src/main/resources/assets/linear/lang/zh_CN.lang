@@ -2,11 +2,11 @@ key.linear.category=Linear
 key.linear.switchmode.desc=切换构建模式
 key.linear.enablebuilding.desc=启用多重放置
 
-desc.line_3_axes=线 (3 轴)
-desc.line_2_axes=线 (2 轴)
-desc.line_1_axis=线 (1 轴)
-desc.wall_3_axes=墙 (3 轴)
-desc.wall_2_axes=墙 (2 轴)
+desc.line_3_axes=线形 (3 轴)
+desc.line_2_axes=线形 (2 轴)
+desc.line_1_axis=线形 (1 轴)
+desc.wall_3_axes=墙形 (3 轴)
+desc.wall_2_axes=墙形 (2 轴)
 
 desc.linear.place=多重放置
 desc.linear.on=开启
