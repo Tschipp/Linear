@@ -30,7 +30,7 @@ public class Linear {
 	public static Linear instance;
 
 	public static final String MODID = "linear";
-	public static final String VERSION = "1.2";
+	public static final String VERSION = "1.2.1";
 	public static final String NAME = "Linear";
 	public static final String ACCEPTED_VERSIONS = "[1.12.2,1.13)";
 	public static final Logger LOGGER = LogManager.getFormatterLogger("Linear");

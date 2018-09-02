@@ -51,4 +51,9 @@ public class CommonProxy {
 	{
 	}
 	
+	public void postUnlockToast(String mode)
+	{
+		
+	}
+	
 }

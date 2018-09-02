@@ -3,13 +3,12 @@ package tschipp.linear.compat.crafttweaker;
 import crafttweaker.annotations.ZenRegister;
 import crafttweaker.api.minecraft.CraftTweakerMC;
 import crafttweaker.api.player.IPlayer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.world.GameType;
 import stanhebben.zenscript.annotations.ZenClass;
 import stanhebben.zenscript.annotations.ZenMethod;
-import tschipp.linear.client.gui.ToastUnlockBuildmode;
+import tschipp.linear.Linear;
 import tschipp.linear.common.caps.IBuildData;
 import tschipp.linear.common.helper.BuildMode;
 import tschipp.linear.common.helper.LinearHelper;
@@ -48,8 +47,8 @@ public class LinearCT
 					EntityPlayer p = getPlayer(player);
 					if (p instanceof EntityPlayerMP)
 						LinearHelper.syncBuildDataWithClient(p);
-					else
-						Minecraft.getMinecraft().getToastGui().add(new ToastUnlockBuildmode(mode));
+					
+					Linear.proxy.postUnlockToast(mode);
 				}
 			}
 		}
