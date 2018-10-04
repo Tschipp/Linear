@@ -9,7 +9,7 @@ import net.minecraft.block.BlockColored;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
@@ -21,7 +21,6 @@ import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -129,30 +128,32 @@ public class ClientEvents
 
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent
-	public void renderGameOverlay(RenderGameOverlayEvent event)
+	public void renderGameOverlay(RenderGameOverlayEvent.Pre event)
 	{
-		if (event.getType() == ElementType.CHAT)
+		if (event.getType() != ElementType.ALL)
 			return;
 
 		float partialticks = event.getPartialTicks();
 		ScaledResolution res = event.getResolution();
-		EntityPlayer player = Minecraft.getMinecraft().player;
 		Minecraft mc = Minecraft.getMinecraft();
+		EntityPlayer player = mc.player;
+
+		if (mc.currentScreen instanceof GuiChat)
+			return;
 
 		float widthheight = (float) ((res.getScaledWidth_double() * res.getScaleFactor()) / (res.getScaledHeight_double() * res.getScaleFactor()));
 		float heightwidth = (float) ((res.getScaledHeight_double() * res.getScaleFactor()) / (res.getScaledWidth_double() * res.getScaleFactor()));
 
 		float factorX = (float) (res.getScaledWidth_double() / 1920f);
 		float factorY = (float) (res.getScaledHeight_double() / 1080f);
-		
-		
+
 		float x = (factorX * LinearConfig.Settings.multiplaceXCoord);
 		float y = (factorY * LinearConfig.Settings.multiplaceYCoord);
 
 		GlStateManager.pushMatrix();
-		
+
 		if (LinearHelper.hasValidItem(player) && !LinearConfig.Settings.hideMultiPlaceIndicator)
-			Minecraft.getMinecraft().fontRenderer.drawStringWithShadow(I18n.translateToLocal("desc.linear.place") + ": " + I18n.translateToLocal(LinearHelper.isBuildingActivated(player) ? "desc.linear.on" : "desc.linear.off"), x, y - 10, 16777215);
+			mc.fontRenderer.drawStringWithShadow(I18n.translateToLocal("desc.linear.place") + ": " + I18n.translateToLocal(LinearHelper.isBuildingActivated(player) ? "desc.linear.on" : "desc.linear.off"), x, y - 10, 16777215);
 
 		if (LinearHelper.isBuildingActivated(player))
 		{
@@ -160,9 +161,8 @@ public class ClientEvents
 			{
 				x = (factorX * LinearConfig.Settings.indicatorXCoord);
 				y = (factorY * LinearConfig.Settings.indicatorYCoord);
-				
-				Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("Build Mode: " + I18n.translateToLocal("desc." + LinearHelper.getBuildMode(player).getName()), x, y, 16777215);
-			
+
+				mc.fontRenderer.drawStringWithShadow("Build Mode: " + I18n.translateToLocal("desc." + LinearHelper.getBuildMode(player).getName()), x, y, 16777215);
 			}
 
 			if (player.isSneaking() && LinearHelper.hasStartPos(player) && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
@@ -179,21 +179,18 @@ public class ClientEvents
 				ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(player.world, state, start, end, LinearHelper.getBuildMode(player), player);
 				ArrayList<BlockPos> valids = LinearHelper.getValidPositions(positions, player);
 
-				Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 				RenderHelper.enableGUIStandardItemLighting();
 
-				if (event.getType() == ElementType.HOTBAR)
-					Minecraft.getMinecraft().getRenderItem().renderItemAndEffectIntoGUI(stack, (int) (factorX * 980), (int) (factorY * 514));
+				mc.getRenderItem().renderItemAndEffectIntoGUI(stack, (int) (factorX * 980), (int) (factorY * 514));
 
 				RenderHelper.disableStandardItemLighting();
 
-				Minecraft.getMinecraft().fontRenderer.drawStringWithShadow("x " + valids.size(), (int) (factorX * 1038), (int) (factorY * 528), positions.size() > valids.size() ? 16711680 : 16777215);
-
+				mc.fontRenderer.drawStringWithShadow("x " + valids.size(), (int) (factorX * 1038), (int) (factorY * 528), positions.size() > valids.size() ? 16711680 : 16777215);
 			}
+
 			GlStateManager.color(1f, 1f, 1f);
 		}
-		
-		Minecraft.getMinecraft().renderEngine.bindTexture(new ResourceLocation("textures/gui/icons.png"));
+
 		GlStateManager.popMatrix();
 	}
 
