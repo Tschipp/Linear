@@ -1,6 +1,7 @@
 package tschipp.linear.common.helper;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,9 +23,14 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import tschipp.linear.Linear;
+import tschipp.linear.api.LinearBlockStateEvent;
+import tschipp.linear.api.LinearHooks;
+import tschipp.linear.api.LinearRenderBlockStateEvent;
+import tschipp.linear.api.LinearRequestEvent;
 import tschipp.linear.common.caps.BuildDataProvider;
 import tschipp.linear.common.caps.IBuildData;
 import tschipp.linear.common.caps.IStartingPosition;
@@ -243,23 +249,20 @@ public class LinearHelper
 		return l;
 	}
 
-	public static ArrayList<BlockPos> getValidPositions(ArrayList<BlockPos> posSet, EntityPlayer player)
+	public static List<BlockPos> getValidPositions(List<BlockPos> posSet, EntityPlayer player)
 	{
 		ItemStack stack = player.getHeldItem(LinearHelper.getHand(player));
-		List<ItemStack> inventory = new ArrayList<ItemStack>();
-		inventory.addAll(player.inventory.mainInventory);
-		inventory.addAll(player.inventory.armorInventory);
-		inventory.addAll(player.inventory.offHandInventory);
+		
+		LinearRequestEvent event = new LinearRequestEvent(player, posSet.size(), stack);
+		
+		MinecraftForge.EVENT_BUS.post(event);
+		
+		if(event.isCanceled())
+			return Collections.EMPTY_LIST;
 
 		final BlockPos playerPos = new BlockPos(Math.floor(player.posX) + 0.5, Math.floor(player.posY), Math.floor(player.posZ) + 0.5);
 
-		int count = 0;
-
-		for (ItemStack s : inventory)
-		{
-			if (s.isItemEqual(stack))
-				count += s.getCount();
-		}
+		int count = event.getProvidedBlocks();
 
 		List<BlockPos> positions = new ArrayList<BlockPos>(posSet);
 		positions.sort((pos1, pos2) -> (pos1.distanceSq(playerPos) > pos2.distanceSq(playerPos) ? 1 : (pos1.distanceSq(playerPos) == pos2.distanceSq(playerPos) ? 0 : -1)));
@@ -287,10 +290,10 @@ public class LinearHelper
 		player.inventory.clearMatchingItems(stack.getItem(), stack.getMetadata(), count, null);
 	}
 
-	public static ArrayList<BlockPos> getInvalidPositions(ArrayList<BlockPos> posSet, EntityPlayer player)
+	public static List<BlockPos> getInvalidPositions(List<BlockPos> posSet, EntityPlayer player)
 	{
-		ArrayList<BlockPos> valid = getValidPositions(posSet, player);
-		ArrayList<BlockPos> newSet = new ArrayList<BlockPos>(posSet);
+		List<BlockPos> valid = getValidPositions(posSet, player);
+		List<BlockPos> newSet = new ArrayList<BlockPos>(posSet);
 		newSet.removeAll(valid);
 
 		return newSet;
@@ -334,23 +337,20 @@ public class LinearHelper
 
 	public static IBlockState getState(EntityPlayer player)
 	{
-		if (hasValidItem(player))
-		{
-			RayTraceResult ray = getLookRay(player);
-			if (ray != null)
-			{
-				ItemStack stack = getValidItem(player);
-
-				Block block = Block.getBlockFromItem(stack.getItem());
-
-				float[] hit = getHitCoords(player);
-				IBlockState state = block.getStateForPlacement(player.world, getLookPos(player, LinearHelper.canPlaceInMidair(player)), ray.sideHit, hit[0], hit[1], hit[2], stack.getMetadata(), player, getHand(player));
-				return state;
-			}
-		}
-		return null;
+		LinearBlockStateEvent event = new LinearBlockStateEvent(player, getValidItem(player), getHand(player));
+		MinecraftForge.EVENT_BUS.post(event);
+	
+		return event.getState();
 	}
 
+	public static IBlockState getRenderState(EntityPlayer player)
+	{
+		LinearRenderBlockStateEvent event = new LinearRenderBlockStateEvent(player, getValidItem(player), getHand(player));
+		MinecraftForge.EVENT_BUS.post(event);
+	
+		return event.getState();
+	}
+	
 	public static EnumHand getHand(EntityPlayer player)
 	{
 		ItemStack main = player.getHeldItemMainhand();
@@ -405,6 +405,14 @@ public class LinearHelper
 			else
 			{
 				if (ListHandler.isAllowed(Block.getBlockFromItem(stack.getItem())))
+					return true;
+			}
+		}
+		else
+		{
+			for(Class<?> clazz : LinearHooks.getDraggables())
+			{
+				if(clazz.isInstance(stack.getItem()))
 					return true;
 			}
 		}

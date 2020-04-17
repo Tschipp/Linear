@@ -1,6 +1,6 @@
 package tschipp.linear.common.helper;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
@@ -15,10 +15,10 @@ public class FakeRenderWorld implements IBlockAccess
 {
 
 	private World realWorld;
-	private ArrayList<BlockPos> positions;
+	private List<BlockPos> positions;
 	private IBlockState state;
 	
-	public FakeRenderWorld(World world, ArrayList<BlockPos> positions, IBlockState state)
+	public FakeRenderWorld(World world, List<BlockPos> positions, IBlockState state)
 	{
 		this.realWorld = world;
 		this.positions = positions;

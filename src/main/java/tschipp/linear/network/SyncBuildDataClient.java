@@ -48,7 +48,7 @@ public class SyncBuildDataClient implements IMessage, IMessageHandler<SyncBuildD
 				}
 				else
 				{
-					System.out.println("player is null!");
+//					System.out.println("player is null!");
 				}
 			}
 		});

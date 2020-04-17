@@ -1,10 +1,11 @@
 package tschipp.linear.client.event;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
@@ -21,9 +22,11 @@ import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
@@ -36,6 +39,7 @@ import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import tschipp.linear.Linear;
+import tschipp.linear.api.LinearRenderBlockStateEvent;
 import tschipp.linear.client.keybind.LinearKeybind;
 import tschipp.linear.common.caps.IBuildData;
 import tschipp.linear.common.config.LinearConfig;
@@ -56,13 +60,15 @@ public class ClientEvents
 			return;
 
 		EntityPlayer player = Minecraft.getMinecraft().player;
+		
 		if (player.isSneaking() && LinearHelper.isBuildingActivated(player))
 		{
 			ItemStack stack = player.getHeldItemMainhand();
 			ItemStack off = player.getHeldItemOffhand();
-
-			if (stack.getItem() instanceof ItemBlock || off.getItem() instanceof ItemBlock)
+			
+			if (LinearHelper.hasValidItem(player))
 			{
+
 				if (event.isButtonstate())
 				{
 					BlockPos pos = LinearHelper.getLookPos(player, false);
@@ -75,13 +81,13 @@ public class ClientEvents
 					BlockPos end = LinearHelper.getLookPos(player, LinearHelper.canPlaceInMidair(player));
 					if (LinearHelper.hasStartPos(player) && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
 					{
-
+						
 						Linear.network.sendToServer(new BuildLine(end));
 
 						BlockPos start = LinearHelper.getStartPos(player);
 						IBlockState state = LinearHelper.getState(player);
 
-						ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(player.world, state, start, end, LinearHelper.getBuildMode(player), player);
+						List<BlockPos> positions = LinearHelper.getBlocksBetween(player.world, state, start, end, LinearHelper.getBuildMode(player), player);
 						positions = LinearHelper.getValidPositions(positions, player);
 
 						for (BlockPos pos : positions)
@@ -126,6 +132,30 @@ public class ClientEvents
 		}
 	}
 
+	@SubscribeEvent
+	public void linearBlockStateEvent(LinearRenderBlockStateEvent event)
+	{
+		EntityPlayer player = event.getPlayer();
+		ItemStack stack = event.getStack();
+		EnumHand hand = event.getHand();
+
+		if (stack.getItem() instanceof ItemBlock)
+		{
+			RayTraceResult ray = LinearHelper.getLookRay(player);
+			if (ray != null)
+			{
+				Block block = Block.getBlockFromItem(stack.getItem());
+
+				float[] hit = LinearHelper.getHitCoords(player);
+				IBlockState state = block.getStateForPlacement(player.world, LinearHelper.getLookPos(player, LinearHelper.canPlaceInMidair(player)), ray.sideHit, hit[0], hit[1], hit[2], stack.getMetadata(), player, hand);
+
+				if (state != null)
+					event.setState(state);
+
+			}
+		}
+	}
+	
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent
 	public void renderGameOverlay(RenderGameOverlayEvent.Pre event)
@@ -137,7 +167,7 @@ public class ClientEvents
 		ScaledResolution res = event.getResolution();
 		Minecraft mc = Minecraft.getMinecraft();
 		EntityPlayer player = mc.player;
-
+		
 		if (mc.currentScreen instanceof GuiChat)
 			return;
 
@@ -167,7 +197,7 @@ public class ClientEvents
 
 			if (player.isSneaking() && LinearHelper.hasStartPos(player) && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
 			{
-				IBlockState state = LinearHelper.getState(player);
+				IBlockState state = LinearHelper.getRenderState(player);
 
 				if (state == null)
 					return;
@@ -176,11 +206,13 @@ public class ClientEvents
 				BlockPos end = LinearHelper.getLookPos(player, LinearHelper.canPlaceInMidair(player));
 				ItemStack stack = LinearHelper.getValidItem(player);
 
-				ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(player.world, state, start, end, LinearHelper.getBuildMode(player), player);
-				ArrayList<BlockPos> valids = LinearHelper.getValidPositions(positions, player);
+				List<BlockPos> positions = LinearHelper.getBlocksBetween(player.world, state, start, end, LinearHelper.getBuildMode(player), player);
+				List<BlockPos> valids = LinearHelper.getValidPositions(positions, player);
 
 				RenderHelper.enableGUIStandardItemLighting();
 
+				GlStateManager.enableDepth();
+				
 				mc.getRenderItem().renderItemAndEffectIntoGUI(stack, (int) (factorX * 980), (int) (factorY * 514));
 
 				RenderHelper.disableStandardItemLighting();
@@ -204,7 +236,7 @@ public class ClientEvents
 		{
 			if (player.isSneaking() && LinearHelper.hasStartPos(player) && LinearHelper.getBuildMode(player) != null && LinearHelper.hasValidItem(player))
 			{
-				IBlockState stateToRender = LinearHelper.getState(player);
+				IBlockState stateToRender = LinearHelper.getRenderState(player);
 				if (stateToRender == null)
 					return;
 
@@ -213,9 +245,9 @@ public class ClientEvents
 
 				World world = player.world;
 
-				ArrayList<BlockPos> positions = LinearHelper.getBlocksBetween(world, stateToRender, start, end, LinearHelper.getBuildMode(player), player);
+				List<BlockPos> positions = LinearHelper.getBlocksBetween(world, stateToRender, start, end, LinearHelper.getBuildMode(player), player);
 
-				ArrayList<BlockPos> invalids = LinearHelper.getInvalidPositions(positions, player);
+				List<BlockPos> invalids = LinearHelper.getInvalidPositions(positions, player);
 
 				FakeRenderWorld renderWorld = new FakeRenderWorld(world, positions, stateToRender);
 
