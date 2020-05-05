@@ -22,6 +22,10 @@ version = "${version}"
 group = "tschipp.linear" 
 archivesBaseName = "linear-${minecraft_version}"
 
+if (System.getenv('BUILD_NUMBER') != null) {
+    version += "." + System.getenv('BUILD_NUMBER')
+}
+
 sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 compileJava {
     sourceCompatibility = targetCompatibility = '1.8'
