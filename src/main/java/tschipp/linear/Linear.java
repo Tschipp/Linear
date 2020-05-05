@@ -37,6 +37,7 @@ public class Linear {
 	public static File CONFIGURATION_FILE;
 	public static final String CERTIFICATE_FINGERPRINT = "fd21553434f4905f2f73ea7838147ac4ea07bd88";
 
+	
 	public static boolean FINGERPRINT_VIOLATED = false;
 	
 	public static SimpleNetworkWrapper network;
