@@ -4,7 +4,7 @@ To use Linear in your projects, include this in your build.gradle:
 ```
 repositories {
 	maven {
-		url "http://maven.blamejared.com/"
+		url "https://maven.blamejared.com/"
 	}
 }
 
