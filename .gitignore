@@ -13,10 +13,10 @@ out
 *.iml
 .idea
 
-# gradle
-build
+# gradle - only the output folders, not the tschipp.linear.build package
+/build/
+/*/build/
 .gradle
-<<<<<buildSrc/build
 buildSrc/.gradle
 
 # loom / moddev / forgegradle
