@@ -1,0 +1,17 @@
+{
+    "key.linear.category": "Linear",
+    "key.linear.switch_mode": "Переключить режим строительства",
+    "key.linear.toggle_building": "Включить мульти-размещение",
+
+    "linear.mode.line_3_axes": "Линия (3 оси)",
+    "linear.mode.line_2_axes": "Линия (2 оси)",
+    "linear.mode.line_1_axis": "Линия (1 ось)",
+    "linear.mode.wall_3_axes": "Стена (3 оси)",
+    "linear.mode.wall_2_axes": "Стена (2 оси)",
+    "linear.mode.circle_2_axes": "Круг (2 оси)",
+    "linear.mode.sphere_3_axes": "Сфера (3 оси)",
+
+    "linear.hud.building": "Мульти-размещение: %s",
+    "linear.hud.on": "Вкл.",
+    "linear.hud.off": "Выкл."
+}

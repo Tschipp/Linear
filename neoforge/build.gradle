@@ -1,0 +1,55 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
+}
+
+// Resolved here, not inside the neoForge {} closure: in there 'project(String)' hits
+// DependencyHandler.project and returns a dependency, which has no file().
+def commonProject = rootProject.project(':common')
+def generatedResources = commonProject.file('src/generated/resources')
+def commonResourcesDir = commonProject.file('src/main/resources')
+
+neoForge {
+    version = neoforge_version
+    // Automatically enable neoforge AccessTransformers if the file exists
+    def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformers.from(at.absolutePath)
+    }
+    parchment {
+        minecraftVersion = parchment_minecraft
+        mappingsVersion = parchment_version
+    }
+    runs {
+        configureEach {
+            systemProperty('neoforge.enabledGameTestNamespaces', mod_id)
+            ideName = "NeoForge ${it.name.capitalize()} (${project.path})" // Unify the run config names with fabric
+        }
+        client {
+            client()
+        }
+        server {
+            server()
+        }
+        // Headless game tests: line building against a real world, with real place events.
+        gameTestServer {
+            type = 'gameTestServer'
+        }
+        // Datagen runs only here, for every loader - it writes the game-test structure into :common.
+        data {
+            data()
+            gameDirectory.set(project.file('runs/data'))
+            programArguments.addAll(
+                    '--mod', mod_id,
+                    '--all',
+                    '--output', generatedResources.absolutePath,
+                    '--existing', commonResourcesDir.absolutePath
+            )
+        }
+    }
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}

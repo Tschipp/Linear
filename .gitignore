@@ -16,10 +16,22 @@ out
 # gradle
 build
 .gradle
+<<<<<buildSrc/build
+buildSrc/.gradle
+
+# loom / moddev / forgegradle
+.architectury-transformer
+runs
+run
+*/run
+*/runs
+fabric/src/generated
+forge/src/generated
+neoforge/src/generated
+
+# Datagen output IS checked in - the game-test structure the NeoForge game tests load. Only its hash
+# cache is not.
+common/src/generated/resources/.cache
 
 # other
 eclipse
-run
-setup\.bat
-deps\.bat
-build\.bat

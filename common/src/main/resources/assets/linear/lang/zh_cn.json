@@ -1,0 +1,19 @@
+{
+    "key.linear.category": "Linear",
+    "key.linear.switch_mode": "切换构建模式",
+    "key.linear.toggle_building": "启用多重放置",
+
+    "linear.mode.line_3_axes": "线形 (3 轴)",
+    "linear.mode.line_2_axes": "线形 (2 轴)",
+    "linear.mode.line_1_axis": "线形 (1 轴)",
+    "linear.mode.wall_3_axes": "墙形 (3 轴)",
+    "linear.mode.wall_2_axes": "墙形 (2 轴)",
+    "linear.mode.circle_2_axes": "圆形 (2 轴)",
+    "linear.mode.sphere_3_axes": "球形 (3 轴)",
+
+    "linear.hud.building": "多重放置: %s",
+    "linear.hud.on": "开启",
+    "linear.hud.off": "关闭",
+
+    "linear.toast.unlocked": "解锁构建模式！"
+}

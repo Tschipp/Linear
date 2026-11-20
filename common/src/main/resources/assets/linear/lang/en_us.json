@@ -1,0 +1,32 @@
+{
+    "key.linear.category": "Linear",
+    "key.linear.switch_mode": "Switch build mode",
+    "key.linear.toggle_building": "Toggle multi-placing",
+
+    "linear.mode.line_3_axes": "Line (3 axes)",
+    "linear.mode.line_2_axes": "Line (2 axes)",
+    "linear.mode.line_1_axis": "Line (1 axis)",
+    "linear.mode.wall_3_axes": "Wall (3 axes)",
+    "linear.mode.wall_2_axes": "Wall (2 axes)",
+    "linear.mode.circle_2_axes": "Circle (2 axes)",
+    "linear.mode.sphere_3_axes": "Sphere (3 axes)",
+
+    "linear.hud.mode": "Build mode: %s",
+    "linear.hud.building": "Multi-placing: %s",
+    "linear.hud.on": "On",
+    "linear.hud.off": "Off",
+
+    "linear.message.mode": "Build mode: %s",
+    "linear.message.on": "Multi-placing on",
+    "linear.message.off": "Multi-placing off",
+
+    "linear.toast.unlocked": "Build mode unlocked!",
+
+    "commands.linear.unknown_mode": "Unknown build mode: %s",
+    "commands.linear.mode.enabled": "Enabled %s for %s player(s)",
+    "commands.linear.mode.disabled": "Disabled %s for %s player(s)",
+    "commands.linear.mode.reset": "Build modes back to the server config for %s player(s)",
+    "commands.linear.limits.set": "Set %s for %s player(s)",
+    "commands.linear.limits.reset": "Limits back to the server config for %s player(s)",
+    "commands.linear.info": "%s - building: %s, mode: %s, modes: %s, max blocks: %s, max distance: %s, reach: %s survival / %s creative, midair: %s survival / %s creative"
+}
